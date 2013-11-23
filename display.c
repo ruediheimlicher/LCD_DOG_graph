@@ -178,13 +178,13 @@ void display_soft_init()
 	SOFT_SPI_DDR &= ~(1<<PIN_RST);
 	SOFT_SPI_DDR |= (1<<PIN_RST);
 
-	_delay_us(10);
+	_delay_us(1);
 	//send 11 init commands to Display
    
 	for (unsigned char tmp = 0;tmp < 14;tmp++)
 	{
 		display_write_byte(CMD,DISPLAY_INIT[tmp]);
-      _delay_us(10);
+      _delay_us(1);
 	}
 	display_clear();
 	
@@ -503,10 +503,10 @@ uint8_t spi_out(uint8_t dataout)
          //DOG_PORT |= (1<<DOG_DATA);
       }
       tempdata<<= 1;
-      _delay_us(10);
+     // _delay_us(10);
       //SCL_HI;
       SOFT_SPI_PORT |= (1<<DOG_SCL);
-      _delay_us(10);
+      //_delay_us(10);
       //SCL_LO;
       SOFT_SPI_PORT &= ~(1<<DOG_SCL);
       

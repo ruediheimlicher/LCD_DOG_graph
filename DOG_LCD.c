@@ -361,27 +361,31 @@ int main (void)
             
          //   char_height_mul=2;
          //display_write_byte(0,'A');
+            
+            char_height_mul = 2;
+            char_width_mul = 2;
+
             if (zeit<10)
             {
-               char_x=2*FONT_WIDTH;
+               char_x=2*FONT_WIDTH*char_width_mul;
             }
             else if (zeit<100)
             {
-               char_x=1*FONT_WIDTH;
+               char_x=1*FONT_WIDTH*char_width_mul;
             }
             else
             {
                char_x=0;
             }
-            char_y = 3;
+            char_y = 4;
             //if (zeit%2)
             {
               // display_inverse(zeit%2);
             }
-            OSZI_A_LO;
             
             display_write_int(loopcount1 & 0xFF);
-            OSZI_A_HI;
+            char_height_mul = 1;
+            char_width_mul = 1;
          //display_write_char('A'+ loopcount1);
             
          }
