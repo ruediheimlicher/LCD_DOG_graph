@@ -461,6 +461,84 @@ void display_write_int(uint8_t zahl)
 }
 
 //##############################################################################################
+//##############################################################################################
+//Ausgabe eines Symbols
+//
+//##############################################################################################
+void display_write_symbol(PGM_P symbol)
+{
+	unsigned char col,page,tmp1,tmp2,tmp3,tmp4,counter;
+	PGM_P pointer = symbol;
+	
+	
+	for(col=(char_x+DISPLAY_OFFSET);col<(char_x+(FONT_WIDTH*char_width_mul)+DISPLAY_OFFSET);col=col+char_width_mul)
+	{
+		for (page=char_y;page<(char_y+((FONT_HEIGHT/8)*char_height_mul));page = page +char_height_mul)
+		{
+			tmp1 = pgm_read_byte(pointer++);
+			
+			if (char_height_mul > 1)
+			{
+				tmp2 = (tmp1&0xf0)>>4;
+				tmp1 = tmp1 & 0x0f;
+				
+				tmp1 = ((tmp1&0x01)*3)+(((tmp1&0x02)<<1)*3)+(((tmp1&0x04)<<2)*3)+(((tmp1&0x08)<<3)*3);
+				tmp2 = ((tmp2&0x01)*3)+(((tmp2&0x02)<<1)*3)+(((tmp2&0x04)<<2)*3)+(((tmp2&0x08)<<3)*3);
+				
+				if (char_height_mul>2)
+				{
+					tmp3 = tmp2;
+					tmp2 = (tmp1&0xf0)>>4;
+					tmp1 = tmp1 & 0x0f;
+               
+					tmp1 = ((tmp1&0x01)*3)+(((tmp1&0x02)<<1)*3)+(((tmp1&0x04)<<2)*3)+(((tmp1&0x08)<<3)*3);
+					tmp2 = ((tmp2&0x01)*3)+(((tmp2&0x02)<<1)*3)+(((tmp2&0x04)<<2)*3)+(((tmp2&0x08)<<3)*3);
+					
+               
+					tmp4 = (tmp3&0xf0)>>4;
+					tmp3 = tmp3 & 0x0f;
+               
+					tmp3 = ((tmp3&0x01)*3)+(((tmp3&0x02)<<1)*3)+(((tmp3&0x04)<<2)*3)+(((tmp3&0x08)<<3)*3);
+					tmp4 = ((tmp4&0x01)*3)+(((tmp4&0x02)<<1)*3)+(((tmp4&0x04)<<2)*3)+(((tmp4&0x08)<<3)*3);
+					
+					display_go_to(col,page+1);
+					for(counter = 0;counter<char_width_mul;counter++)
+					{
+						display_write_byte(0,tmp3);
+					}
+					
+					display_go_to(col,page+2);
+					for(counter = 0;counter<char_width_mul;counter++)
+					{
+						display_write_byte(0,tmp4);
+					}
+				}
+            
+            
+				display_go_to(col,page);
+				
+				for(counter = 0;counter<char_width_mul;counter++)
+				{
+					display_write_byte(DATA,tmp2);
+				}
+			}
+			
+			display_go_to(col,page-1);
+			for(counter = 0;counter<char_width_mul;counter++)
+			{
+				display_write_byte(DATA,tmp1);
+			}
+		}
+	}
+	
+	if (char_x < (128 + DISPLAY_OFFSET))
+	{
+		char_x = char_x + (FONT_WIDTH*char_width_mul);
+	}
+	return;
+}
+
+
 /*
  http://www.mikrocontroller.net/attachment/5130/spi.c
  void write_spi (unsigned char data_out){       //msb first

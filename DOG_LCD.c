@@ -324,6 +324,8 @@ int main (void)
    
    char_x=0;
    char_y = 2;
+   display_write_symbol(pfeilvollrechts);
+   
    display_write_str(titelbuffer);
    char_x=0;
    char_y = 3;
@@ -359,8 +361,8 @@ int main (void)
          {
             uint8_t zeit = loopcount1;
             
-         //   char_height_mul=2;
-         //display_write_byte(0,'A');
+            
+            char_y = 4;
             
             char_height_mul = 2;
             char_width_mul = 2;
@@ -377,13 +379,14 @@ int main (void)
             {
                char_x=0;
             }
-            char_y = 4;
+            
             //if (zeit%2)
             {
               // display_inverse(zeit%2);
             }
-            
+            display_write_symbol(pfeilvollrechts);
             display_write_int(loopcount1 & 0xFF);
+            display_write_symbol(diaga);
             char_height_mul = 1;
             char_width_mul = 1;
          //display_write_char('A'+ loopcount1);

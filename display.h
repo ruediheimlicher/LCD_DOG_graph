@@ -147,7 +147,7 @@
 void display_write_int(uint8_t zahl);
 void display_inverse(uint8_t inv);
 uint8_t spi_out(uint8_t dataout);
-
+void display_write_symbol(PGM_P symbol);
 
 	#define display_write(format, args...)   display_write_P(PSTR(format) , ## args)
 
