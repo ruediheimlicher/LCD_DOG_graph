@@ -77,8 +77,19 @@ void display_back_char (void)
 //##############################################################################################
 void display_write_byte(unsigned cmd_data, unsigned char data) 
 {
+   if(cmd_data == 0)
+	{
+		A0_HI;
+	}
+	else
+	{
+		A0_LO;
+	}
    
    
+   spi_out(data);
+  
+   /*
 	DOG_PORT &= ~(1<<SPI_SS);
 	if(cmd_data == 0)
 	{
@@ -89,13 +100,14 @@ void display_write_byte(unsigned cmd_data, unsigned char data)
 		PORT_A0 &= ~(1<<PIN_A0);
 	}
    
-//   spi_out(data);
+//   
    
 	SPDR = data;
 	while(!(SPSR & (1<<SPIF)));
    
    _delay_us(1);
 	PORTB |= (1<<SPI_SS);
+    */
 }
 
 //##############################################################################################
@@ -104,6 +116,7 @@ void display_write_byte(unsigned cmd_data, unsigned char data)
 //##############################################################################################
 void display_init() 
 {
+   
 	//Set TIMER0 (PWM OC2 Pin)
 	BRIGHTNESS_PWM_DDR |= (1<<BRIGHTNESS_PWM_PIN);//PWM PORT auf Ausgang (OC2)
 	TCCR2A |= (1<<WGM21|1<<WGM20|1<<COM2A1|1<<CS20);
@@ -123,6 +136,9 @@ void display_init()
 	PORT_RST &= ~(1<<PIN_RST);                   
 	PORT_RST |= (1<<PIN_RST);
 	//asm("nop");
+
+   
+   
 	_delay_us(10);
 	//send 11 init commands to Display
    
@@ -143,20 +159,25 @@ void display_soft_init()
 	TCCR2A |= (1<<WGM21|1<<WGM20|1<<COM2A1|1<<CS20);
 	OCR2A = 50;
 	
-	//set outputs AO und RESET
-	DDR_A0  |= (1<<PIN_A0);
-	DDR_RST |= (1<<PIN_RST);
+   SOFT_SPI_DDR |= (1<<DOG_A0);
+   SOFT_SPI_PORT |= (1<<DOG_A0);
    
-	//Set SPI PORT
-	DDRB |= (1<<SPI_Clock)|(1<<SPI_DO)|(1<<SPI_SS);
-	PORTB |= (1<<SPI_SS);
-	//Enable SPI, SPI in Master Mode
-	SPCR = (1<<SPE)|(1<<MSTR);
+   SOFT_SPI_DDR |= (1<<DOG_RST);
+   SOFT_SPI_PORT |= (1<<DOG_RST);
+   
+   SOFT_SPI_DDR |= (1<<DOG_CS);
+   SOFT_SPI_PORT |= (1<<DOG_CS);
+   
+   SOFT_SPI_DDR |= (1<<DOG_SCL);
+   SOFT_SPI_PORT &= ~(1<<DOG_SCL);
+   
+   SOFT_SPI_DDR |= (1<<DOG_DATA);
+   SOFT_SPI_PORT &= ~(1<<DOG_DATA);
    
    //Reset the Display Controller
-	PORT_RST &= ~(1<<PIN_RST);
-	PORT_RST |= (1<<PIN_RST);
-	//asm("nop");
+	SOFT_SPI_DDR &= ~(1<<PIN_RST);
+	SOFT_SPI_DDR |= (1<<PIN_RST);
+
 	_delay_us(10);
 	//send 11 init commands to Display
    
@@ -178,11 +199,11 @@ void display_soft_init()
 void display_go_to (unsigned char x, unsigned char y)
 {
    
-	display_write_byte(1,DISPLAY_PAGE_ADDRESS | ((y) & 0x0F));
+	display_write_byte(CMD,DISPLAY_PAGE_ADDRESS | ((y) & 0x0F));
    
-	display_write_byte(1,DISPLAY_COL_ADDRESS_MSB | ((x>>4) & 0x0F));
+	display_write_byte(CMD,DISPLAY_COL_ADDRESS_MSB | ((x>>4) & 0x0F));
   
-	display_write_byte(1,DISPLAY_COL_ADDRESS_LSB | ((x) & 0x0F));
+	display_write_byte(CMD,DISPLAY_COL_ADDRESS_LSB | ((x) & 0x0F));
 	return;
 }
 
@@ -301,14 +322,14 @@ void display_write_char(unsigned char c)
 				
 				for(counter = 0;counter<char_width_mul;counter++)
 				{
-					display_write_byte(0,tmp2);
+					display_write_byte(DATA,tmp2);
 				}
 			}
 			
 			display_go_to(col,page-1);
 			for(counter = 0;counter<char_width_mul;counter++)
 			{	
-				display_write_byte(0,tmp1);
+				display_write_byte(DATA,tmp1);
 			}
 		}
 	}
@@ -459,7 +480,7 @@ void display_write_int(uint8_t zahl)
 
 uint8_t spi_out(uint8_t dataout)
 {
-   OSZI_B_LO;
+  // OSZI_B_LO;
    CS_LO; // Chip enable
    uint8_t datain=0xFF;
    uint8_t pos=0;
@@ -472,26 +493,25 @@ uint8_t spi_out(uint8_t dataout)
       if (tempdata & 0x80)
       {
          //DATA_HI;
-         DOG_PORT |= (1<<DOG_DATA);
-         //DOG_PORT &= ~(1<<DOG_DATA);
+         SOFT_SPI_PORT |= (1<<DOG_DATA);
 
       }
       else
       {
          //DATA_LO;
-         DOG_PORT &= ~(1<<DOG_DATA);
+         SOFT_SPI_PORT &= ~(1<<DOG_DATA);
          //DOG_PORT |= (1<<DOG_DATA);
       }
       tempdata<<= 1;
       _delay_us(10);
       //SCL_HI;
-      DOG_PORT |= (1<<DOG_SCL);
+      SOFT_SPI_PORT |= (1<<DOG_SCL);
       _delay_us(10);
       //SCL_LO;
-      DOG_PORT &= ~(1<<DOG_SCL);
+      SOFT_SPI_PORT &= ~(1<<DOG_SCL);
       
    }
-   OSZI_B_HI;
+ //  OSZI_B_HI;
    
    CS_HI;// Chip disable
    

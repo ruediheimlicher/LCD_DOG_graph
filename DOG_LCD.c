@@ -288,7 +288,7 @@ int main (void)
    
 
  //
-   display_init();
+   display_soft_init();
    
 //	display_mem(pic1);
    //Warteschleife 3s fuer Logo
