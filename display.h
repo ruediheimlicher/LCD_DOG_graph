@@ -37,18 +37,21 @@
 #define DOG_SCL   3
 #define DOG_DATA  5
 
+
+// SOFT-SPI defines
+
 #define SOFT_SPI_PORT   PORTD
 #define SOFT_SPI_DDR   DDRD
 
 
-#define CS_HI DOG_PORT |= (1<<DOG_CS)
-#define CS_LO DOG_PORT &= ~(1<<DOG_CS)
+#define CS_HI SOFT_SPI_PORT |= (1<<DOG_CS)
+#define CS_LO SOFT_SPI_PORT &= ~(1<<DOG_CS)
 
-#define SCL_HI DOG_PORT |= (1<<DOG_SCL)
-#define SCL_LO DOG_PORT &= ~(1<<DOG_SCL)
+#define SCL_HI SOFT_SPI_PORT |= (1<<DOG_SCL)
+#define SCL_LO SOFT_SPI_PORT &= ~(1<<DOG_SCL)
 
-#define DATA_HI DOG_PORT |= (1<<DOG_DATA)
-#define DATA_LO DOG_PORT &= ~(1<<DOG_DATA)
+#define DATA_HI SOFT_SPI_PORT |= (1<<DOG_DATA)
+#define DATA_LO SOFT_SPI_PORT &= ~(1<<DOG_DATA)
 
 
 
