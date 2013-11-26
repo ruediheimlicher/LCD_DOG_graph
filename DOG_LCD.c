@@ -119,13 +119,13 @@ uint16_t TastenStatus=0;
 uint16_t Tastencount=0;
 uint16_t Tastenprellen=0x01F;
 
-volatile uint8_t Menu_Ebene=0;
+volatile uint8_t  Menu_Ebene=0;
 volatile uint8_t  Kanal_Thema =0;
 
 volatile uint8_t  Anzeigekanal =0;
 
 
-volatile uint8_t laufsekunde=0;
+volatile uint16_t laufsekunde=0;
 volatile uint8_t laufminute=0;
 
 
@@ -255,18 +255,8 @@ void lcd_putnav(void)
 
 }
 
-
-
-
 int main (void)
 {
-	/* INITIALIZE */
-//	LCD_DDR |=(1<<LCD_RSDS_PIN);
-//	LCD_DDR |=(1<<LCD_ENABLE_PIN);
-//	LCD_DDR |=(1<<LCD_CLOCK_PIN);
-	
-   
-	
 	
 	slaveinit();
 	
@@ -289,25 +279,10 @@ int main (void)
 
  //
    display_soft_init();
-   
-//	display_mem(pic1);
-   //Warteschleife 3s fuer Logo
-	for(unsigned long counter= 0;counter<1000000;counter++){asm("nop");};
 	
 	//Display wird gelöscht
 	display_clear();
 	
-	//char_x=50;//0-128
-	//char_y=4; //0-8
-	
-	//display_write("Chief is here");
-
-   /*
-   initDOGL();
-   _delay_us(50);
-   //void charChain(uint8_t page, uint8_t column, uint8_t  inverse, const uint8_t *pChain)
-   charChain(0,0,0,(uint8_t*)"Hallo");
-   */
    _delay_us(50);
    
    
@@ -316,20 +291,28 @@ int main (void)
    //lcd_puts(titelbuffer);
    char_x=0;
    char_y = 1;
+   char_height_mul = 2;
+   char_width_mul = 2;
 
    display_write_str(titelbuffer);
+   char_height_mul = 1;
+   char_width_mul = 1;
 
-   strcpy_P(titelbuffer, (PGM_P)pgm_read_word(&(TitelTable[1])));
-
+   strcpy_P(titelbuffer, (PGM_P)pgm_read_word(&(TitelTable[5])));
    
-   char_x=0;
-   char_y = 2;
-   display_write_symbol(pfeilvollrechts);
-   
-   display_write_str(titelbuffer);
    char_x=0;
    char_y = 3;
+   display_write_symbol(pfeilvollrechts);
+   char_x += FONT_WIDTH;
+   //display_write_str(titelbuffer);
+   
+   char_x=0;
+   char_y = 4;
 
+   display_write_prop_str(char_y,char_x,0,(unsigned char*)titelbuffer);
+   
+   char_x=0;
+   char_y = 5;
 
 #pragma mark while
 	while (1)
@@ -344,10 +327,6 @@ int main (void)
       
       if (loopCount0%64 == 1)
       {
-         //display_write("Hallo");
-         //display_mem(pic1);
-         //charChain(0,laufsekunde,1,(uint8_t*)"Hallo");
-         //_delay_us(50);
 
       }
        if (loopCount0%8 == 4)
@@ -361,11 +340,10 @@ int main (void)
          {
             uint8_t zeit = loopcount1;
             
+            char_y = 6;
             
-            char_y = 4;
-            
-            char_height_mul = 2;
-            char_width_mul = 2;
+            char_height_mul = 1;
+            char_width_mul = 1;
 
             if (zeit<10)
             {
@@ -389,7 +367,10 @@ int main (void)
             display_write_symbol(diaga);
             char_height_mul = 1;
             char_width_mul = 1;
-         //display_write_char('A'+ loopcount1);
+            
+            char_y = 7;
+            char_x=0;
+            display_write_min_sek(laufsekunde);
             
          }
 			LOOPLED_PORT ^= (1<<LOOPLED_PIN);
@@ -406,7 +387,7 @@ int main (void)
             if (laufsekunde == 60)
             {
                laufminute++;
-               laufsekunde=0;
+               //laufsekunde=0;
                
             }
          }
@@ -425,24 +406,6 @@ int main (void)
          //write_zahl_lcd(12,0,manuellcounter,3);
          //write_zahl_lcd(15,0,3,3);
          
-         /*
-         write_byte_lcd(12,1,loopcount1 % 8);
-         if (loopcount1 % 2)
-         {
-          
-            write_byte_lcd(0,1,32);
-            write_byte_lcd(11,1,32);
-            
-         }
-         else
-         {
-            write_byte_lcd(0,1,0x7e);
-            write_byte_lcd(11,1,0x7f);
-         }
-         
-         write_byte_lcd(9,2,2);
-         write_byte_lcd(11,2,3);
-*/
 			
 			if ((manuellcounter > MANUELLTIMEOUT) )
 			{

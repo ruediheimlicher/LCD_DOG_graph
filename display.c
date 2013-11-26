@@ -152,7 +152,7 @@ void display_init()
 	return;
 }
 
-void display_soft_init()
+void display_soft_init(void)
 {
 	//Set TIMER0 (PWM OC2 Pin)
 	BRIGHTNESS_PWM_DDR |= (1<<BRIGHTNESS_PWM_PIN);//PWM PORT auf Ausgang (OC2)
@@ -225,7 +225,7 @@ void display_clear()
 		{
          if (col%4)
          {
-			display_write_byte(0,0x00);
+			display_write_byte(DATA,0x00);
          }
          else
          {
@@ -340,6 +340,31 @@ void display_write_char(unsigned char c)
 	}
 	return;
 }
+//##############################################################################################
+// Ausgabe simple char
+
+void display_write_simplechar(unsigned char c)
+{
+	unsigned char col,tmp1,page;
+	PGM_P pointer = font[c];
+	
+	
+	for(col=(char_x+DISPLAY_OFFSET);col<(char_x+(FONT_WIDTH)+DISPLAY_OFFSET);col=col+1)
+	{
+		{
+			tmp1 = pgm_read_byte(pointer++);
+			
+			display_go_to(col,char_y);
+         display_write_byte(DATA,tmp1);
+		}
+	}
+	
+	if (char_x < (128 + DISPLAY_OFFSET))
+	{
+		char_x = char_x + (FONT_WIDTH);
+	}
+	return;
+}
 
 //##############################################################################################
 //Ausgabe eines Zeichenkette
@@ -361,74 +386,74 @@ void display_write_P (const char *Buffer,...)
 		
 	//Ausgabe der Zeichen
     for(;;)
-	{
-		by = pgm_read_byte(Buffer++);
-		if(by==0) break; // end of format string
-            
-		if (by == '%')
-		{
-            by = pgm_read_byte(Buffer++);
-			if (isdigit(by)>0)
-				{
-                                 
- 				str_null_buffer[0] = by;
-				str_null_buffer[1] = '\0';
-				move = atoi(str_null_buffer);
-                by = pgm_read_byte(Buffer++);
-				}
-
-			switch (by)
-				{
-                case 's':
-                    ptr = va_arg(ap,char *);
-                    while(*ptr) { display_write_char(*ptr++); }
-                    break;
-				case 'b':
-					Base = 2;
-					goto ConversionLoop;
-				case 'c':
-					//Int to char
-					format_flag = va_arg(ap,int);
-					display_write_char (format_flag++);
-					break;
-				case 'i':
-					Base = 10;
-					goto ConversionLoop;
-				case 'o':
-					Base = 8;
-					goto ConversionLoop;
-				case 'x':
-					Base = 16;
-					//****************************
-					ConversionLoop:
-					//****************************
-					itoa(va_arg(ap,int),str_buffer,Base);
-					int b=0;
-					while (str_buffer[b++] != 0){};
-					b--;
-					if (b<move)
-						{
-						move -=b;
-						for (tmp = 0;tmp<move;tmp++)
-							{
-							str_null_buffer[tmp] = '0';
-							}
-						//tmp ++;
-						str_null_buffer[tmp] = '\0';
-						strcat(str_null_buffer,str_buffer);
-						strcpy(str_buffer,str_null_buffer);
-						}
-					display_write_str (str_buffer);
-					move =0;
-					break;
-				}
-			
-			}	
-		else
-		{
-			display_write_char ( by );	
-		}
-	}
+    {
+       by = pgm_read_byte(Buffer++);
+       if(by==0) break; // end of format string
+       
+       if (by == '%')
+       {
+          by = pgm_read_byte(Buffer++);
+          if (isdigit(by)>0)
+          {
+             
+             str_null_buffer[0] = by;
+             str_null_buffer[1] = '\0';
+             move = atoi(str_null_buffer);
+             by = pgm_read_byte(Buffer++);
+          }
+          
+          switch (by)
+          {
+             case 's':
+                ptr = va_arg(ap,char *);
+                while(*ptr) { display_write_char(*ptr++); }
+                break;
+             case 'b':
+                Base = 2;
+                goto ConversionLoop;
+             case 'c':
+                //Int to char
+                format_flag = va_arg(ap,int);
+                display_write_char (format_flag++);
+                break;
+             case 'i':
+                Base = 10;
+                goto ConversionLoop;
+             case 'o':
+                Base = 8;
+                goto ConversionLoop;
+             case 'x':
+                Base = 16;
+                //****************************
+             ConversionLoop:
+                //****************************
+                itoa(va_arg(ap,int),str_buffer,Base);
+                int b=0;
+                while (str_buffer[b++] != 0){};
+                b--;
+                if (b<move)
+                {
+                   move -=b;
+                   for (tmp = 0;tmp<move;tmp++)
+                   {
+                      str_null_buffer[tmp] = '0';
+                   }
+                   //tmp ++;
+                   str_null_buffer[tmp] = '\0';
+                   strcat(str_null_buffer,str_buffer);
+                   strcpy(str_buffer,str_null_buffer);
+                }
+                display_write_str (str_buffer);
+                move =0;
+                break;
+          }
+          
+       }	
+       else
+       {
+          display_write_char ( by );	
+       }
+    }
 	va_end(ap);
 }
 
@@ -461,6 +486,46 @@ void display_write_int(uint8_t zahl)
 }
 
 //##############################################################################################
+//Ausgabe Minute:Sekunde
+//
+//##############################################################################################
+void display_write_min_sek(uint8_t rawsekunde)
+{
+   uint8_t minute = rawsekunde/60;
+   uint8_t sekunde = rawsekunde%60;
+   uint8_t stunde = rawsekunde/3600;
+   char tempbuffer[6]={};
+   if (stunde)
+   {
+      char stdbuffer[4]={};
+      stdbuffer[0] =stunde/10+'0';
+      stdbuffer[1] =stunde%10+'0';
+      stdbuffer[2] =':';
+      stdbuffer[3] = '\0';
+      display_write_str(stdbuffer);
+   }
+   tempbuffer[0] =minute/10+'0';
+   tempbuffer[1] =minute%10+'0';
+   tempbuffer[2] =':';
+   tempbuffer[3] =sekunde/10+'0';
+   tempbuffer[4] =sekunde%10+'0';
+   tempbuffer[5] = '\0';
+   display_write_str(tempbuffer);
+   
+}
+
+
+//##############################################################################################
+// Ausgabe Pfeil rechts an pos x,y (page)
+//##############################################################################################
+void display_pfeilvollrechts(uint8_t col, uint8_t page)
+{
+   char_x = col;
+   char_y = page;
+   display_write_symbol(pfeilvollrechts);
+   
+}
+
 //##############################################################################################
 //Ausgabe eines Symbols
 //
@@ -553,6 +618,197 @@ void display_write_symbol(PGM_P symbol)
  }
 
  */
+
+
+/*
+ * File:        dogl.c
+ * Project:     Mini Anzeige Modul
+ * Author:      Nicolas Meyertˆns
+ * Version:     siehe setup.h
+ * Web:         www.PIC-Projekte.de
+
+ * Diese Funktion gibt eine Zeichenkette auf dem Bildschirm aus.
+ * Mit einer Angabe der Adresse, kann dies an jedem beliebigen Ort auf
+ * dem Display stattfinden. Des Weiteren kann zwischen normaler und
+ * invertierter Darstellung gew‰hlt werden.
+ *
+ * page:        Adresse - Zeile (0..7)
+ * column:      Adresse - Spalte (0..127)
+ * inverse:     Invertierte Darstellung wenn true sonst normal
+ * *pChain:     Die Zeichnkette ansich, welche geschrieben werden soll
+ */
+
+/*
+ * Auswahl einer Adresse. Diese Funktion wird in der Regel nicht vom
+ * Anwender selbst aufgerufen, sondern nur durch die Funktionen dieser
+ * C-Datei.
+ *
+ * page:    Adresse - Zeile (0..7)
+ * column:  Adresse - Spalte (0..127)
+ */
+void setAddrDOGL(uint8_t page, uint8_t column)
+{
+   if( page<8 && column<128 )
+   {
+      
+      display_write_byte(CMD,0xB0 + page);
+      display_write_byte(CMD,0x10 + ((column&0xF0)>>4) );
+      display_write_byte(CMD,0x00 +  (column&0x0F) );
+      
+   }
+}
+
+void display_writeprop_str(uint8_t page, uint8_t column, uint8_t inverse, const uint8_t *pChain)
+{
+   
+   uint8_t k;
+   setAddrDOGL(page,column);
+   
+   if(inverse)
+   {
+      display_write_byte(DATA,~propfont[0][1]);
+      column++;
+   }
+   else
+   {
+      display_write_byte(DATA,propfont[0][1]);
+      column++;
+   }
+   
+   while(*pChain)
+   {
+      
+      PGM_P pointer = propfont[*pChain-32];
+      uint8_t  fontbreite =   pgm_read_byte(pointer);
+      unsigned char tmp1=0;
+      for(k=1; k <= fontbreite; k++)
+      {
+         
+         tmp1 = pgm_read_byte(pointer[k]);
+        
+         if( column > 127)
+            break;
+         if(inverse)
+         {
+            display_write_byte(DATA,~tmp1);
+            column++;
+         }
+         else
+         {
+            display_write_byte(DATA,tmp1);
+            column++;
+         }
+      }
+      
+      if( column > 127)
+         return;
+      if(inverse)
+      {
+         display_write_byte(DATA,~propfont[0][1]);
+         //column++;
+      }
+      else
+      {
+         display_write_byte(DATA,propfont[0][1]);
+//         column++;
+      }
+      
+      /*
+       * Ab dem (126-32). Eintrag in der Font Library folgen die Zeichen
+       * des MiniAnzeigeModuls. Diese Eintr‰ge kommen NICHT als String in
+       * diese Funktion und haben somit keinen Terminator! Es muss beim
+       * Zeichnen eines Zeichens also darauf geachtet werden, dass der
+       * Pointer nicht einen Schritt weiter geht sondern direkt die
+       * Schleife beendet. Das geschieht hier:
+       */
+      if( *pChain > 126 )
+         break;
+      pChain++;
+   }
+  
+}
+
+uint8_t display_write_prop_str(uint8_t page, uint8_t column, uint8_t inverse, const uint8_t *pChain)
+{
+   uint8_t l=0,k;
+   setAddrDOGL(page-1,column);
+   if(inverse)
+   {
+      display_write_byte(DATA,~propfont[0][1]);
+      column++;
+   }
+   else
+   {
+      display_write_byte(DATA,propfont[0][1]);
+      column++;
+   }
+   
+   while(*pChain)
+   {
+      PGM_P pointer = propfont[*pChain-32];
+      uint8_t  fontbreite =   pgm_read_byte(pointer++);
+      unsigned char tmp1=0;
+      for(k=1; k <= fontbreite; k++)
+      {
+         if( column > 127)
+            break;
+         display_go_to(column,page-1);
+         tmp1 = pgm_read_byte(pointer++);
+         column++;
+         if(inverse)
+         {
+            display_write_byte(DATA,~tmp1);
+         }
+         else
+         {
+            display_write_byte(DATA,tmp1);
+         }
+      }
+      if( column > 127)
+      {
+         return 0;
+      }
+      if(inverse)
+      {
+         display_write_byte(DATA,~propfont[0][1]);
+         column++;
+      }
+      else
+      {
+         display_write_byte(DATA,propfont[0][1]);
+         column++;
+      }
+      
+      /*
+       * Ab dem (126-32). Eintrag in der Font Library folgen die Zeichen
+       * des MiniAnzeigeModuls. Diese Eintr‰ge kommen NICHT als String in
+       * diese Funktion und haben somit keinen Terminator! Es muss beim
+       * Zeichnen eines Zeichens also darauf geachtet werden, dass der
+       * Pointer nicht einen Schritt weiter geht sondern direkt die
+       * Schleife beendet. Das geschieht hier:
+       */
+      if( *pChain > 126 )
+         break;
+      pChain++;
+   } // while *char
+   
+   return l;
+}
+
+
+//##############################################################################################
+
+void r_uitoa8(int8_t zahl, char* string)
+{
+   uint8_t i;
+   
+   string[3]='\0';                  // String Terminator
+   for(i=3; i>=0; i--)
+   {
+      string[i]=(zahl % 10) +'0';     // Modulo rechnen, dann den ASCII-Code von '0' addieren
+      zahl /= 10;
+   }
+}
 //##############################################################################################
 
 

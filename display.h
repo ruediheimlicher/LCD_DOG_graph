@@ -12,10 +12,10 @@
 
 // nicht von font.h????
 #define FONT_WIDTH 	6
-#define FONT_HEIGHT 8  //8, 16, 32, 64, 128
+//#define FONT_HEIGHT 8  //8, 16, 32, 64, 128
 
 
-	#define DISPLAY_OFFSET		4	
+	#define DISPLAY_OFFSET		2	
 	
 	#define LINE1				5			
 	
@@ -148,6 +148,16 @@ void display_write_int(uint8_t zahl);
 void display_inverse(uint8_t inv);
 uint8_t spi_out(uint8_t dataout);
 void display_write_symbol(PGM_P symbol);
+
+void display_pfeilvollrechts(uint8_t col, uint8_t page);
+void display_write_min_sek(uint8_t rawsekunde);
+void display_writeprop_str(uint8_t page, uint8_t column, uint8_t inverse, const uint8_t *pChain);
+
+void r_uitoa8(int8_t zahl, char* string);
+
+
+
+
 
 	#define display_write(format, args...)   display_write_P(PSTR(format) , ## args)
 
