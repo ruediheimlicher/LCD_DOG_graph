@@ -120,4 +120,5 @@ void lcd_clr_line(uint8_t Linie);
 void lcd_put_zeit(uint8_t minuten, uint8_t stunden);
 void lcd_put_wochentag(uint8_t wd);
 void lcd_put_temperatur(uint16_t temperatur);
+void lcd_put_spannung(uint16_t spannung);
 #endif

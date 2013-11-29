@@ -724,5 +724,55 @@ void lcd_put_tempbis99(uint16_t temperatur)
 		lcddelay_ms(2);
 }
 
+void lcd_put_spannung(uint16_t spannung)
+{
+   char buffer[7]={};
+   //uint16_t temp=(temperatur-127)*5;
+   //lcd_gotoxy(0,1);
+   //lcd_puts("t:\0");
+   //lcd_putint((uint8_t) temperatur);
+   uint16_t temp=(spannung)*5;
+   //lcd_puts("T:\0");
+   //lcd_putint16(temp);
+   
+   //		uint16_t temp=temperatur;
+   
+   //		itoa(temp, buffer,10);
+   r_itoa16(temp,buffer);
+   //		lcd_puts(buffer);
+   //		lcd_putc(' * ');
+   
+   char outstring[7]={};
+   
+   outstring[6]='\0';
+   outstring[5]='V';
+   outstring[4]=buffer[6];
+   outstring[3]='.';
+   outstring[2]=buffer[5];
+   if (abs(temp)<100)
+   {
+		outstring[1]=' ';
+		
+   }
+   else
+   {
+		outstring[1]=buffer[4];
+      
+   }
+   outstring[0]=buffer[0];
+   /*
+    if (temp<100)
+    {
+    lcd_putc(' ');
+    }
+    if (temp<10)
+    {
+    lcd_putc(' ');
+    }
+    */	
+   lcd_puts(outstring);
+   lcddelay_ms(1);
+}
+
 /*************************************************************************/
 

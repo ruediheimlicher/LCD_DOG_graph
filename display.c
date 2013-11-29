@@ -17,7 +17,32 @@
 #include <avr/delay.h>
 #include "display.h"
 #include "font.h"
+#include "text.h"
 
+extern volatile uint16_t      laufsekunde;
+extern volatile uint8_t       curr_screen;
+extern volatile uint8_t       curr_page; // aktuelle page
+extern volatile uint8_t       curr_col; // aktuelle colonne
+extern volatile uint8_t       curr_model; // aktuelles modell
+extern volatile uint8_t       curr_kanal; // aktueller kanal
+
+extern volatile uint8_t       curr_cursorzeile; // aktuelle zeile des cursors
+extern volatile uint8_t       curr_cursorspalte; // aktuelle colonne des cursors
+
+extern volatile uint8_t       last_cursorzeile; // letzte zeile des cursors
+extern volatile uint8_t       last_cursorspalte; // letzte colonne des cursors
+
+
+
+extern volatile uint16_t motorsekunde;
+extern volatile uint16_t batteriespannung;
+
+extern volatile uint16_t  posregister[4][8]; // Aktueller screen: werte fuer page und daraufliegende col fuer Menueintraege (hex). geladen aus progmem
+
+extern volatile uint16_t  cursorpos[8][4]; // Aktueller screen: werte fuer page und daraufliegende col fuer cursor (hex). geladen aus progmem
+
+// 
+extern volatile uint16_t              updatecounter; // Zaehler fuer Einschalten
 /*
  write_dogm(0x40,A0);// Display start line set --> 0
  write_dogm(0xA1,A0);  // ADC set --> reverse
@@ -60,6 +85,242 @@ const volatile char DISPLAY_INIT[] =
 
 //char_height_mul 1, 2 or 4
 volatile unsigned char char_x=0,char_y=1,char_height_mul=1,char_width_mul=1;
+
+
+
+void sethomescreen(void)
+{
+   posregister[3][0] = 56 | (0x02 << 8); // Einschaltzeit
+
+   posregister[3][1] = 56 | (0x02 << 8); // Einschaltzeit
+   posregister[3][2] = 56 | (0x03 << 8); // Stopuhr
+   posregister[3][3] = 56 | (0x04 << 8); // Motorzeit
+   posregister[3][4] = 44 | (0x07 << 8); // Batt
+   posregister[3][5] = 74 | (0x06 << 8); // Spannungsanzeige
+  
+   // positionen lesen
+   // titel setzen
+   strcpy_P(titelbuffer, (PGM_P)pgm_read_word(&(TitelTable[0])));
+   char_x=0;
+   char_y = 1;
+   char_height_mul = 1;
+   char_width_mul = 1;
+   //display_write_prop_str(char_y,char_x,0,(unsigned char*)titelbuffer);
+   display_write_str(titelbuffer);
+   char_height_mul = 1;
+   char_width_mul = 1;
+   // Einschaltzeit
+   
+   char_y= (posregister[3][0] & 0xFF00)>>8;
+
+  // char_y = 4;
+   char_x=0;
+   strcpy_P(titelbuffer, (PGM_P)pgm_read_word(&(TitelTable[1])));
+   display_write_str(titelbuffer);
+   char_x = posregister[3][0] & 0x00FF;
+   //display_write_min_sek(laufsekunde);
+
+   char_x = posregister[3][1] & 0x00FF;
+   char_y= (posregister[3][1] & 0xFF00)>>8;
+
+   
+
+   strcpy_P(titelbuffer, (PGM_P)pgm_read_word(&(TitelTable[2])));
+   char_x=0;
+   char_y= (posregister[3][2] & 0xFF00)>>8;
+   display_write_str(titelbuffer);
+   char_x = posregister[3][2] & 0x00FF;
+
+   
+   strcpy_P(titelbuffer, (PGM_P)pgm_read_word(&(TitelTable[3]))); // Motorzeit
+   char_x=0;
+   char_y= (posregister[3][3] & 0xFF00)>>8;
+   char_height_mul = 2;
+   char_width_mul = 2;
+
+   display_write_str(titelbuffer);
+   
+   char_x = posregister[3][3] & 0x00FF;
+   display_write_min_sek(motorsekunde);
+   
+   char_height_mul = 1;
+   char_width_mul = 1;
+
+   // Batteriespannung
+
+   char_y= (posregister[3][4] & 0xFF00)>>8;
+   char_y+=1;
+   char_x = posregister[3][4] & 0x00FF;
+   strcpy_P(titelbuffer, (PGM_P)pgm_read_word(&(TitelTable[6]))); // Akku
+   display_write_str(titelbuffer);
+   
+   char_height_mul = 1;
+   char_width_mul = 1;
+
+  // display_write_char(' ');
+ 
+   char_x=0;
+   char_y = curr_page;
+   display_write_symbol(pfeilvollrechts);
+   char_x += 2;
+   strcpy_P(titelbuffer, (PGM_P)pgm_read_word(&(TitelTable[4])));
+   display_write_str(titelbuffer);
+}// sethomescreen
+
+void setmenuscreen(void)
+{
+   posregister[0][0] =  cursortab[1] |    (0x03 << 8); // modellcursor
+   posregister[0][1] =  itemtab[0] |    (0x03 << 8); // Modelltext
+   posregister[0][2] =  itemtab[1] |    (0x03 << 8); // Modellnummer
+
+   
+   posregister[1][0] =  cursortab[1] |    (0x04 << 8); // kanalcursor
+   posregister[1][1] =  itemtab[0] |    (0x04 << 8); // Kanaltext
+   posregister[1][2] =  itemtab[1] |    (0x04 << 8); // kanalnummer
+   
+   
+   
+   cursorpos[0][0] =posregister[0][0]; // cursorpos fuer model zeile/colonne
+   cursorpos[1][0] =posregister[1][0]; // cursorpos fuer kanal
+   
+   
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(SettingTable[0])));
+   char_x=0;
+   char_y = 1;
+   char_height_mul = 1;
+   char_width_mul = 1;
+   //display_write_prop_str(char_y,char_x,0,(unsigned char*)titelbuffer);
+   display_write_str(menubuffer);
+   char_height_mul = 1;
+   char_width_mul = 1;
+   
+   // Modell-Zeile
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(SettingTable[1])));
+   char_y= (posregister[0][1] & 0xFF00)>>8;
+   char_x = posregister[0][1] & 0x00FF;
+   char_x=0;
+   display_write_str(menubuffer);
+   
+   char_y= (posregister[0][2] & 0xFF00)>>8;
+   char_x = posregister[0][2] & 0x00FF;
+   display_write_int(curr_model);
+ 
+   char_y= (posregister[0][0] & 0xFF00)>>8;
+   char_x = posregister[0][0] & 0x00FF;
+   display_write_symbol(pfeilvollrechts);
+
+   // Kanal-Zeile
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(SettingTable[2])));
+   char_y= (posregister[1][1] & 0xFF00)>>8;
+   char_x = posregister[1][1] & 0x00FF;
+   char_x=0;
+   display_write_str(menubuffer);
+   
+   char_y= (posregister[1][2] & 0xFF00)>>8;
+   char_x = posregister[1][2] & 0x00FF;
+   display_write_int(curr_kanal);
+   
+   char_y= (posregister[1][0] & 0xFF00)>>8;
+   char_x = posregister[1][0] & 0x00FF;
+   /*
+   if (laufsekunde%2)
+   {
+   display_write_symbol(pfeilvollrechts);
+   }
+   else
+   {
+      display_write_symbol(pfeilleerrechts);
+   }
+   */
+   
+
+
+}// setmenuscreen
+
+
+
+
+
+uint8_t update_screen(void)
+{
+   switch (curr_screen)
+   {
+      case 0: // homescreen
+      {
+         updatecounter++;
+         char_x = posregister[3][0] & 0x00FF;
+         char_y= (posregister[3][0] & 0xFF00)>>8;
+         //display_go_to(char_x,char_y);
+         char_height_mul = 1;
+         char_width_mul = 1;
+         char_x=90;
+         char_y = 1;
+
+         display_write_min_sek(laufsekunde);
+         
+         
+         // Motorzeit aktualisieren
+         char_height_mul = 2;
+         char_width_mul = 2;
+
+         char_y= (posregister[3][3] & 0xFF00)>>8;
+         char_x = posregister[3][3] & 0x00FF;
+         display_write_min_sek(motorsekunde);
+         
+         // Batteriespannung aktualisieren
+         char_y= (posregister[3][4] & 0xFF00)>>8;
+         char_x = posregister[3][5] & 0x00FF;
+         display_write_spannungbis10(batteriespannung);
+
+         
+         char_height_mul = 1;
+         char_width_mul = 1;
+
+      }break;
+         
+      case 1: // Menu
+      {
+         char_x=90;
+         char_y = 1;
+         display_write_min_sek(laufsekunde);
+
+         char_y= (posregister[0][2] & 0xFF00)>>8;
+         char_x = posregister[0][2] & 0x00FF;
+         display_write_int(curr_model);
+         
+         if (!((curr_cursorzeile == last_cursorzeile) && (curr_cursorspalte == last_cursorspalte))) // cursorzeile verschoben
+         {
+            uint16_t lastcursorposition = cursorpos[last_cursorzeile][last_cursorspalte];
+            
+            // letzte Cursorposition entfernen
+            char_y= (lastcursorposition & 0xFF00)>>8;
+            char_x = lastcursorposition & 0x00FF;
+            display_write_symbol(pfeilwegrechts);
+            // last updaten
+            last_cursorzeile = curr_cursorzeile;
+            last_cursorspalte = curr_cursorspalte;
+         }
+         
+         uint16_t cursorposition = cursorpos[curr_cursorzeile][curr_cursorspalte];
+
+         char_y= (cursorposition & 0xFF00)>>8;
+         char_x = cursorposition & 0x00FF;
+         
+         
+         if (laufsekunde%2)
+         {
+            display_write_symbol(pfeilvollrechts);
+         }
+         else
+         {
+            display_write_symbol(pfeilwegrechts);
+         }
+
+
+      }break;
+   }
+   return 0;
+}
 
 //##############################################################################################
 //Writes one byte to data or cmd register
@@ -486,10 +747,36 @@ void display_write_int(uint8_t zahl)
 }
 
 //##############################################################################################
+//Ausgabe Spannung
+//
+//##############################################################################################
+void display_write_spannungbis10(uint8_t rawspannung) // eine Dezimale
+{
+   uint16_t temp = rawspannung*5;
+   uint8_t dezimale = temp%10;
+   uint8_t wert = temp/10;
+   char tempbuffer[6]={};
+  
+   {
+     // tempbuffer[0] =' ';
+   }
+   tempbuffer[0] =wert%10+'0';
+   tempbuffer[1] ='.';
+   
+   tempbuffer[2] =dezimale+'0';
+   tempbuffer[3] ='V';
+   tempbuffer[4] = '\0';
+   display_write_str(tempbuffer);
+
+   
+}
+
+
+//##############################################################################################
 //Ausgabe Minute:Sekunde
 //
 //##############################################################################################
-void display_write_min_sek(uint8_t rawsekunde)
+void display_write_min_sek(uint16_t rawsekunde)
 {
    uint8_t minute = rawsekunde/60;
    uint8_t sekunde = rawsekunde%60;
@@ -658,76 +945,6 @@ void setAddrDOGL(uint8_t page, uint8_t column)
    }
 }
 
-void display_writeprop_str(uint8_t page, uint8_t column, uint8_t inverse, const uint8_t *pChain)
-{
-   
-   uint8_t k;
-   setAddrDOGL(page,column);
-   
-   if(inverse)
-   {
-      display_write_byte(DATA,~propfont[0][1]);
-      column++;
-   }
-   else
-   {
-      display_write_byte(DATA,propfont[0][1]);
-      column++;
-   }
-   
-   while(*pChain)
-   {
-      
-      PGM_P pointer = propfont[*pChain-32];
-      uint8_t  fontbreite =   pgm_read_byte(pointer);
-      unsigned char tmp1=0;
-      for(k=1; k <= fontbreite; k++)
-      {
-         
-         tmp1 = pgm_read_byte(pointer[k]);
-        
-         if( column > 127)
-            break;
-         if(inverse)
-         {
-            display_write_byte(DATA,~tmp1);
-            column++;
-         }
-         else
-         {
-            display_write_byte(DATA,tmp1);
-            column++;
-         }
-      }
-      
-      if( column > 127)
-         return;
-      if(inverse)
-      {
-         display_write_byte(DATA,~propfont[0][1]);
-         //column++;
-      }
-      else
-      {
-         display_write_byte(DATA,propfont[0][1]);
-//         column++;
-      }
-      
-      /*
-       * Ab dem (126-32). Eintrag in der Font Library folgen die Zeichen
-       * des MiniAnzeigeModuls. Diese Eintr‰ge kommen NICHT als String in
-       * diese Funktion und haben somit keinen Terminator! Es muss beim
-       * Zeichnen eines Zeichens also darauf geachtet werden, dass der
-       * Pointer nicht einen Schritt weiter geht sondern direkt die
-       * Schleife beendet. Das geschieht hier:
-       */
-      if( *pChain > 126 )
-         break;
-      pChain++;
-   }
-  
-}
-
 uint8_t display_write_prop_str(uint8_t page, uint8_t column, uint8_t inverse, const uint8_t *pChain)
 {
    uint8_t l=0,k;
@@ -814,6 +1031,7 @@ void r_uitoa8(int8_t zahl, char* string)
 
 uint8_t spi_out(uint8_t dataout)
 {
+   cli();
   // OSZI_B_LO;
    CS_LO; // Chip enable
    uint8_t datain=0xFF;
@@ -849,7 +1067,7 @@ uint8_t spi_out(uint8_t dataout)
    
    CS_HI;// Chip disable
    
-   
+   sei();
    return datain;
 }
 

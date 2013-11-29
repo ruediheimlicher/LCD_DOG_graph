@@ -64,10 +64,25 @@ void initADC(uint8_t derKanal)
   /* nach Aktivieren des ADC wird ein "Dummy-Readout" empfohlen, man liest
      also einen Wert und verwirft diesen, um den ADC "warmlaufen zu lassen" */
   ADCSRA |= (1<<ADSC);              // eine ADC-Wandlung (Der ADC setzt dieses Bit ja wieder auf 0 nach dem Wandeln)
-  while ( ADCSRA & (1<<ADSC) ) {
+  while ( ADCSRA & (1<<ADSC) )
+  {
      ;     // auf Abschluss der Wandlung warten 
   }
 }
+
+int16_t adc_read(uint8_t derKanal)
+{
+   uint8_t low;
+   
+   ADCSRA = (1<<ADEN) | ADC_PRESCALER;             // enable ADC
+   //ADCSRB = (1<<ADHSM) | (derKanal & 0x20);             // high speed mode
+   ADMUX = (1<<REFS0) | (derKanal & 0x1F);                    // configure mux input
+   ADCSRA = (1<<ADEN) | (1<<ADPS2) | (1<<ADPS0) | (1<<ADSC); // start the conversion
+   while (ADCSRA & (1<<ADSC)) ;                    // wait for result
+   low = ADCL;                                     // must read LSB first
+   return (ADCH << 8) | low;                       // must read MSB only once!
+}
+
 
 uint16_t readKanal(uint8_t derKanal) //Unsere Funktion zum ADC-Channel aus lesen
 {
