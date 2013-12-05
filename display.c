@@ -35,6 +35,7 @@ extern volatile uint8_t       last_cursorspalte; // letzte colonne des cursors
 
 
 extern volatile uint16_t motorsekunde;
+extern volatile uint16_t stopsekunde;
 extern volatile uint16_t batteriespannung;
 
 extern volatile uint16_t  posregister[4][8]; // Aktueller screen: werte fuer page und daraufliegende col fuer Menueintraege (hex). geladen aus progmem
@@ -93,7 +94,8 @@ void sethomescreen(void)
    posregister[3][0] = 56 | (0x02 << 8); // Einschaltzeit
 
    posregister[3][1] = 56 | (0x02 << 8); // Einschaltzeit
-   posregister[3][2] = 56 | (0x03 << 8); // Stopuhr
+   
+   posregister[3][2] = 56 | (0x03 << 8); // Stoppuhr
    posregister[3][3] = 56 | (0x04 << 8); // Motorzeit
    posregister[3][4] = 44 | (0x07 << 8); // Batt
    posregister[3][5] = 74 | (0x06 << 8); // Spannungsanzeige
@@ -105,8 +107,10 @@ void sethomescreen(void)
    char_y = 1;
    char_height_mul = 1;
    char_width_mul = 1;
+   display_inverse(1);
    //display_write_prop_str(char_y,char_x,0,(unsigned char*)titelbuffer);
-   display_write_str(titelbuffer);
+   display_write_inv_str(titelbuffer);
+   display_inverse(0);
    char_height_mul = 1;
    char_width_mul = 1;
    // Einschaltzeit
@@ -116,7 +120,7 @@ void sethomescreen(void)
   // char_y = 4;
    char_x=0;
    strcpy_P(titelbuffer, (PGM_P)pgm_read_word(&(TitelTable[1])));
-   display_write_str(titelbuffer);
+   //display_write_str(titelbuffer);
    char_x = posregister[3][0] & 0x00FF;
    //display_write_min_sek(laufsekunde);
 
@@ -134,11 +138,13 @@ void sethomescreen(void)
    
    strcpy_P(titelbuffer, (PGM_P)pgm_read_word(&(TitelTable[3]))); // Motorzeit
    char_x=0;
-   char_y= (posregister[3][3] & 0xFF00)>>8;
+   char_y= ((posregister[3][3] & 0xFF00)>>8);
+   char_height_mul = 2;
+   display_write_str(titelbuffer);
+   
+   char_y= ((posregister[3][3] & 0xFF00)>>8);
    char_height_mul = 2;
    char_width_mul = 2;
-
-   display_write_str(titelbuffer);
    
    char_x = posregister[3][3] & 0x00FF;
    display_write_min_sek(motorsekunde);
@@ -149,9 +155,9 @@ void sethomescreen(void)
    // Batteriespannung
 
    char_y= (posregister[3][4] & 0xFF00)>>8;
-   char_y+=1;
    char_x = posregister[3][4] & 0x00FF;
    strcpy_P(titelbuffer, (PGM_P)pgm_read_word(&(TitelTable[6]))); // Akku
+   char_height_mul = 2;
    display_write_str(titelbuffer);
    
    char_height_mul = 1;
@@ -169,20 +175,27 @@ void sethomescreen(void)
 
 void setmenuscreen(void)
 {
-   posregister[0][0] =  cursortab[1] |    (0x03 << 8); // modellcursor
+   posregister[0][0] =  cursortab[0] |    (0x03 << 8); // modellcursor
    posregister[0][1] =  itemtab[0] |    (0x03 << 8); // Modelltext
    posregister[0][2] =  itemtab[1] |    (0x03 << 8); // Modellnummer
+   posregister[0][3] =  itemtab[2] |    (0x03 << 8); // Modellname
 
    
-   posregister[1][0] =  cursortab[1] |    (0x04 << 8); // kanalcursor
-   posregister[1][1] =  itemtab[0] |    (0x04 << 8); // Kanaltext
-   posregister[1][2] =  itemtab[1] |    (0x04 << 8); // kanalnummer
+   posregister[1][0] =  cursortab[0] |    (0x05 << 8); // kanalcursor
+   posregister[1][1] =  itemtab[0] |    (0x05 << 8); // Kanaltext
+   posregister[1][2] =  itemtab[1] |    (0x05 << 8); // kanalnummer
+   
+   
+   posregister[2][0] =  cursortab[0] |    (0x06 << 8); // mixcursor
+   posregister[2][1] =  itemtab[0] |    (0x06 << 8); // mixtext
+   posregister[2][2] =  itemtab[1] |    (0x06 << 8); // mixnummer
    
    
    
    cursorpos[0][0] =posregister[0][0]; // cursorpos fuer model zeile/colonne
    cursorpos[1][0] =posregister[1][0]; // cursorpos fuer kanal
-   
+   cursorpos[2][0] =posregister[2][0]; // cursorpos fuer mix
+  
    
    strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(SettingTable[0])));
    char_x=0;
@@ -190,7 +203,7 @@ void setmenuscreen(void)
    char_height_mul = 1;
    char_width_mul = 1;
    //display_write_prop_str(char_y,char_x,0,(unsigned char*)titelbuffer);
-   display_write_str(menubuffer);
+   display_write_inv_str(menubuffer);
    char_height_mul = 1;
    char_width_mul = 1;
    
@@ -198,12 +211,18 @@ void setmenuscreen(void)
    strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(SettingTable[1])));
    char_y= (posregister[0][1] & 0xFF00)>>8;
    char_x = posregister[0][1] & 0x00FF;
-   char_x=0;
+   //char_x=0;
    display_write_str(menubuffer);
    
    char_y= (posregister[0][2] & 0xFF00)>>8;
    char_x = posregister[0][2] & 0x00FF;
    display_write_int(curr_model);
+
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(ModelTable[curr_model])));
+   char_y= (posregister[0][3] & 0xFF00)>>8;
+   char_x = posregister[0][3] & 0x00FF;
+   display_write_prop_str(char_y,char_x,0,menubuffer);
+   
  
    char_y= (posregister[0][0] & 0xFF00)>>8;
    char_x = posregister[0][0] & 0x00FF;
@@ -213,13 +232,25 @@ void setmenuscreen(void)
    strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(SettingTable[2])));
    char_y= (posregister[1][1] & 0xFF00)>>8;
    char_x = posregister[1][1] & 0x00FF;
-   char_x=0;
+   //char_x=0;
    display_write_str(menubuffer);
    
    char_y= (posregister[1][2] & 0xFF00)>>8;
    char_x = posregister[1][2] & 0x00FF;
    display_write_int(curr_kanal);
+
    
+   // Mix-Zeile
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(SettingTable[3])));
+   char_y= (posregister[2][1] & 0xFF00)>>8;
+   char_x = posregister[2][1] & 0x00FF;
+   //char_x=0;
+   display_write_str(menubuffer);
+   
+   char_y= (posregister[2][2] & 0xFF00)>>8;
+   char_x = posregister[2][2] & 0x00FF;
+   display_write_int(curr_kanal);
+
    char_y= (posregister[1][0] & 0xFF00)>>8;
    char_x = posregister[1][0] & 0x00FF;
    /*
@@ -257,7 +288,15 @@ uint8_t update_screen(void)
          char_y = 1;
 
          display_write_min_sek(laufsekunde);
+ 
+         // Stopzeit aktualisieren
+         char_height_mul = 1;
+         char_width_mul = 1;
          
+         char_y= (posregister[3][3] & 0xFF00)>>8;
+         char_x = posregister[3][3] & 0x00FF;
+         display_write_min_sek(motorsekunde);
+
          
          // Motorzeit aktualisieren
          char_height_mul = 2;
@@ -306,7 +345,9 @@ uint8_t update_screen(void)
          char_y= (cursorposition & 0xFF00)>>8;
          char_x = cursorposition & 0x00FF;
          
+         display_write_symbol(pfeilvollrechts);
          
+         /*
          if (laufsekunde%2)
          {
             display_write_symbol(pfeilvollrechts);
@@ -315,7 +356,7 @@ uint8_t update_screen(void)
          {
             display_write_symbol(pfeilwegrechts);
          }
-
+          */
 
       }break;
    }
@@ -541,10 +582,10 @@ void display_write_char(unsigned char c)
 		{
 			tmp1 = pgm_read_byte(pointer++);
 			
-			if (char_height_mul > 1)
+			if (char_height_mul > 1) // schreiben auf mehrere pages
 			{
-				tmp2 = (tmp1&0xf0)>>4;
-				tmp1 = tmp1 & 0x0f;
+				tmp2 = (tmp1&0xf0)>>4; // HI byte
+				tmp1 = tmp1 & 0x0f;     // LO byte
 				
 				tmp1 = ((tmp1&0x01)*3)+(((tmp1&0x02)<<1)*3)+(((tmp1&0x04)<<2)*3)+(((tmp1&0x08)<<3)*3);
 				tmp2 = ((tmp2&0x01)*3)+(((tmp2&0x02)<<1)*3)+(((tmp2&0x04)<<2)*3)+(((tmp2&0x08)<<3)*3);
@@ -576,7 +617,7 @@ void display_write_char(unsigned char c)
 					{
 						display_write_byte(0,tmp4);
 					}
-				}
+				} // end >2
 
 			
 				display_go_to(col,page);
@@ -601,6 +642,83 @@ void display_write_char(unsigned char c)
 	}
 	return;
 }
+
+// inv
+void  display_write_inv_char(unsigned char c)
+{
+	unsigned char col,page,tmp1,tmp2,tmp3,tmp4,counter;
+	PGM_P pointer = font[c];
+	
+	
+	for(col=(char_x+DISPLAY_OFFSET);col<(char_x+(FONT_WIDTH*char_width_mul)+DISPLAY_OFFSET);col=col+char_width_mul)
+	{
+		for (page=char_y;page<(char_y+((FONT_HEIGHT/8)*char_height_mul));page = page +char_height_mul)
+		{
+			tmp1 = pgm_read_byte(pointer++);
+			
+			if (char_height_mul > 1) // schreiben auf mehrere pages
+			{
+				tmp2 = (tmp1&0xf0)>>4;
+				tmp1 = tmp1 & 0x0f;
+				
+				tmp1 = ((tmp1&0x01)*3)+(((tmp1&0x02)<<1)*3)+(((tmp1&0x04)<<2)*3)+(((tmp1&0x08)<<3)*3);
+				tmp2 = ((tmp2&0x01)*3)+(((tmp2&0x02)<<1)*3)+(((tmp2&0x04)<<2)*3)+(((tmp2&0x08)<<3)*3);
+				
+				if (char_height_mul>2)
+				{
+					tmp3 = tmp2;
+					tmp2 = (tmp1&0xf0)>>4;
+					tmp1 = tmp1 & 0x0f;
+               
+					tmp1 = ((tmp1&0x01)*3)+(((tmp1&0x02)<<1)*3)+(((tmp1&0x04)<<2)*3)+(((tmp1&0x08)<<3)*3);
+					tmp2 = ((tmp2&0x01)*3)+(((tmp2&0x02)<<1)*3)+(((tmp2&0x04)<<2)*3)+(((tmp2&0x08)<<3)*3);
+					
+               
+					tmp4 = (tmp3&0xf0)>>4;
+					tmp3 = tmp3 & 0x0f;
+               
+					tmp3 = ((tmp3&0x01)*3)+(((tmp3&0x02)<<1)*3)+(((tmp3&0x04)<<2)*3)+(((tmp3&0x08)<<3)*3);
+					tmp4 = ((tmp4&0x01)*3)+(((tmp4&0x02)<<1)*3)+(((tmp4&0x04)<<2)*3)+(((tmp4&0x08)<<3)*3);
+					
+					display_go_to(col,page+1);
+					for(counter = 0;counter<char_width_mul;counter++)
+					{
+						display_write_byte(0,~tmp3);
+					}
+					
+					display_go_to(col,page+2);
+					for(counter = 0;counter<char_width_mul;counter++)
+					{
+						display_write_byte(0,~tmp4);
+					}
+				}
+            
+            
+				display_go_to(col,page);
+				
+				for(counter = 0;counter<char_width_mul;counter++)
+				{
+					display_write_byte(DATA,~tmp2);
+				}
+			}
+			
+			display_go_to(col,page-1);
+			for(counter = 0;counter<char_width_mul;counter++)
+			{
+				display_write_byte(DATA,~tmp1);
+			}
+		}
+	}
+	
+	if (char_x < (128 + DISPLAY_OFFSET))
+	{
+		char_x = char_x + (FONT_WIDTH*char_width_mul);
+	}
+	return;
+}
+
+
+
 //##############################################################################################
 // Ausgabe simple char
 
@@ -727,6 +845,14 @@ void display_write_str(char *str)
 	while (*str)
 	{
 		display_write_char(*str++);
+	}
+}
+
+void display_write_inv_str(char *str)
+{
+	while (*str)
+	{
+		display_write_inv_char(*str++);
 	}
 }
 
@@ -945,7 +1071,7 @@ void setAddrDOGL(uint8_t page, uint8_t column)
    }
 }
 
-uint8_t display_write_prop_str(uint8_t page, uint8_t column, uint8_t inverse, const uint8_t *pChain)
+void display_write_prop_str(uint8_t page, uint8_t column, uint8_t inverse, const uint8_t *pChain)
 {
    uint8_t l=0,k;
    setAddrDOGL(page-1,column);
@@ -969,6 +1095,7 @@ uint8_t display_write_prop_str(uint8_t page, uint8_t column, uint8_t inverse, co
       {
          if( column > 127)
             break;
+         
          display_go_to(column,page-1);
          tmp1 = pgm_read_byte(pointer++);
          column++;

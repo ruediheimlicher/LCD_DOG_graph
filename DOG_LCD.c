@@ -118,6 +118,7 @@ volatile uint16_t laufsekunde=0;
 volatile uint16_t laufminute=0;
 
 volatile uint16_t motorsekunde=0;
+volatile uint16_t stopsekunde=0;
 
 volatile uint16_t batteriespannung =0;
 
@@ -163,7 +164,18 @@ ISR (TIMER0_OVF_vect)
       mscounter=0;
       laufsekunde++;
       
+      if (senderstatus & (1<<MOTOR_ON))
+      {
+         motorsekunde++;
+      }
+      if (senderstatus & (1<<STOP_ON))
+      {
+         stopsekunde++;
+      }
+      
    }
+   
+
    
 }
 
@@ -231,8 +243,8 @@ void resetcursorpos(void)
 
 void slaveinit(void)
 {
-	MANUELL_DDR |= (1<<MANUELLPIN);		//Pin 3 von PORT D als Ausgang fuer Manuell
-	MANUELL_PORT &= ~(1<<MANUELLPIN);
+	//MANUELL_DDR |= (1<<MANUELLPIN);		//Pin 3 von PORT D als Ausgang fuer Manuell
+	//MANUELL_PORT &= ~(1<<MANUELLPIN);
  	//DDRD |= (1<<CONTROL_A);	//Pin 6 von PORT D als Ausgang fuer Servo-Enable
 	//DDRD |= (1<<CONTROL_B);	//Pin 7 von PORT D als Ausgang fuer Servo-Impuls
 	LOOPLED_DDR |= (1<<LOOPLED_PIN);
@@ -256,7 +268,7 @@ void slaveinit(void)
 
 //ADC
    ADC_DDR &= ~(1<<ADC_AKKUPIN);
-    ADC_DDR &= ~(1<<TASTATURPIN);
+   ADC_DDR &= ~(1<<TASTATURPIN);
    
    
 	
@@ -356,14 +368,10 @@ int main (void)
    
    initADC(TASTATURPIN);
    delay_ms(1000);
-   lcd_gotoxy(0,1);
-	lcd_putc('A');
 
    timer0();
    //delay_ms(1000);
-   //lcd_gotoxy(1,1);
-	//lcd_putc('B');
-
+ 
    sei();
    //delay_ms(100);
 	lcd_gotoxy(1,2);
@@ -437,12 +445,17 @@ int main (void)
             manuellcounter++; // timeout von MANUELL incr.
          }
          
-         if (loopcount1 % 8==0)
+         if (loopcount1 % 16==0)
          {
-            batteriespannung = adc_read(0)/0x40; // ca. 6V
-            lcd_gotoxy(14,0);
-            
-            lcd_put_spannung(batteriespannung);
+            //batteriespannung = adc_read(0)/0x40; // ca. 6V
+            batteriespannung = adc_read(0); // ca. 6V
+
+            lcd_gotoxy(0,0);
+            lcd_putint12(batteriespannung);
+            lcd_putc(' ');
+           // lcd_putdez(batteriespannung, 2);
+            //lcd_put_frac(' ', batteriespannung/100, 1, batteriespannung%100);
+            //lcd_put_spannung(batteriespannung);
 
            // laufsekunde++;
             if (laufsekunde == 60)
@@ -451,16 +464,12 @@ int main (void)
                //laufsekunde=0;
 
             }
-            if (senderstatus & (1<<MOTOR_ON))
-            {
-               motorsekunde++;
-            }
-            
+            update_screen();
          }
-         update_screen();
-         lcd_gotoxy(0,1);
-         lcd_putint(laufsekunde);
-         lcd_putint(updatecounter);
+         
+         //lcd_gotoxy(0,1);
+         //lcd_putint(laufsekunde);
+         //lcd_putint(updatecounter);
          //lcd_putint(motorsekunde);
  
          //volatile uint8_t jahr=0;
@@ -625,7 +634,7 @@ int main (void)
                      
                   case 3: //
                   {
-                     
+                     senderstatus ^= (1<<STOP_ON);
                      if (programmstatus & (1<<MANUELL))
                      {
                         manuellcounter=0;

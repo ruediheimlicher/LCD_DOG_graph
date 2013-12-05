@@ -49,6 +49,7 @@
 #include <inttypes.h>
 #include <avr/io.h>
 #include <stdlib.h>
+#include <string.h>
 #include <util/delay.h>
 
 //extern char* wochentag[];
@@ -544,10 +545,36 @@ uint8_t frac  : Anzahl der Nachkommastellen
 }
 
 
-
+void lcd_putdez(uint16_t wert, uint8_t stellen)
+{
+   //lcd_putc(vorzeichen);
+   char* buffer=malloc(sizeof(uint16_t));
+   uint8_t i=0;
+   itoa(wert,buffer,10);
+   
+   //lcd_puts(buffer);
+      while(*buffer)
+      {
+         if (i==stellen)
+         {
+            lcd_putc('.');
+         }
+         lcd_putc(*buffer++);    // zeichen am LC-Display ausgeben
+         i++;
+      }
+      
+   free(buffer);
+  
+}
  
 void lcd_put_frac(char* string, uint8_t start, uint8_t komma, uint8_t frac) 
 {
+   
+   
+   
+   
+   
+   
  
   uint8_t i;            // Zähler
   uint8_t flag=0;       // Merker für führende Nullen

@@ -13,13 +13,28 @@
 const char titel0[] PROGMEM = "RC Home\0";
 const char titel1[] PROGMEM = "ON-Zeit:\0";
 const char titel2[] PROGMEM = "Stoppuhr:\0";
-const char titel3[] PROGMEM = "Mot:\0";
+const char titel3[] PROGMEM = "Motorzeit\0";
 const char titel4[] PROGMEM = "Menu";
 const char titel5[] PROGMEM = "123456\0";
 const char titel6[] PROGMEM = "Akku\0";
 const char titel7[] PROGMEM = "D\0";
 
 PGM_P const TitelTable[] PROGMEM = {titel0, titel1, titel2, titel3, titel4, titel5, titel6, titel7};
+
+// Modelle
+const char model0[] PROGMEM = "E-Segler A\0";
+const char model1[] PROGMEM = "E-Segler B\0";
+const char model2[] PROGMEM = "Hangsegler A\0";
+const char model3[] PROGMEM = "Motor A";
+const char model4[] PROGMEM = "Motor B";
+const char model5[] PROGMEM = "AA\0";
+const char model6[] PROGMEM = "BB\0";
+const char model7[] PROGMEM = "CC\0";
+
+PGM_P const ModelTable[] PROGMEM = {model0, model1, model2, model3, model4, model5, model6, model7};
+
+
+
 
 
 // Settingscreen

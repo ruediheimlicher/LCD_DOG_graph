@@ -140,7 +140,7 @@ char titelbuffer[20];
 
 
 volatile uint8_t cursortab[4] = {0,32,64,96};
-volatile uint8_t itemtab[4] = {8,40,72,104};
+volatile uint8_t itemtab[4] = {8,48,72,104};
 
 
 	void display_init(void);
@@ -151,6 +151,8 @@ volatile uint8_t itemtab[4] = {8,40,72,104};
 	
 	void display_write_char(unsigned char);
 	void display_write_str(char *str);
+void display_write_inv_str(char *str);
+
 	void display_write_P (const char *Buffer,...);
 
 void display_write_int(uint8_t zahl);
@@ -161,6 +163,8 @@ void display_write_symbol(PGM_P symbol);
 void display_pfeilvollrechts(uint8_t col, uint8_t page);
 void display_write_min_sek(uint16_t rawsekunde);
 void display_writeprop_str(uint8_t page, uint8_t column, uint8_t inverse, const uint8_t *pChain);
+
+void display_write_prop_str(uint8_t page, uint8_t column, uint8_t inverse, const uint8_t *pChain);
 
 void display_write_spannungbis10(uint8_t rawspannung); // eine Dezimale
 void r_uitoa8(int8_t zahl, char* string);

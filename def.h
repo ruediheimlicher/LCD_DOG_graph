@@ -57,6 +57,7 @@
 #define DOGM_CMD_PIN	3
 
 #define MOTOR_ON     1
+#define STOP_ON     1
 
 
 
