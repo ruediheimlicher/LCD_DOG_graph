@@ -545,26 +545,51 @@ uint8_t frac  : Anzahl der Nachkommastellen
 }
 
 
-void lcd_putdez(uint16_t wert, uint8_t stellen)
+void lcd_putdez(uint16_t zahl, uint8_t stellen)
 {
-   //lcd_putc(vorzeichen);
-   char* buffer=malloc(sizeof(uint16_t));
-   uint8_t i=0;
-   itoa(wert,buffer,10);
-   
-   //lcd_puts(buffer);
-      while(*buffer)
+   // zahl ist folge von ziffern ohne Punkt.
+#define ANZAHLELEMENTE 6
+   char string[ANZAHLELEMENTE]={};
+   int8_t i;                             // schleifenzŠhler
+   int8_t flag=0;
+   string[ANZAHLELEMENTE-1]='\0';                       // String Terminator
+   for(i=ANZAHLELEMENTE-2; i>=0; i--)
+   {
+      
+      if (i==ANZAHLELEMENTE-stellen-2)
       {
-         if (i==stellen)
-         {
-            lcd_putc('.');
-         }
-         lcd_putc(*buffer++);    // zeichen am LC-Display ausgeben
-         i++;
+         string[i] = '.';
+      }
+      else
+       
+      {
+         
+         string[i]=(zahl % 10) +'0';         // Modulo rechnen, dann den ASCII-Code von '0' addieren
+         
+         zahl /= 10;
       }
       
-   free(buffer);
+   }
+   
+   char c;
+   i=0;
+   while ( (c = string[i]) )
+   {
+      if (c>'0')
+      {
+         flag=1;
+      }
+      if (flag )
+      {
+         lcd_putc(c);
+      }
+      
+      i++;
+   }
+
+   
   
+   
 }
  
 void lcd_put_frac(char* string, uint8_t start, uint8_t komma, uint8_t frac) 

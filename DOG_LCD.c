@@ -71,10 +71,11 @@ volatile uint8_t                 last_cursorspalte=0; // letzte colonne des curs
 
 volatile uint8_t                 curr_model=0; // aktuelles modell
 volatile uint8_t                 curr_kanal=0; // aktueller kanal
+volatile uint8_t                 curr_setting=0; // aktuelles Setting fuer Modell
 
-volatile uint16_t                posregister[4][8]={}; // Aktueller screen: werte fuer page und daraufliegende col fuer Menueintraege (hex). geladen aus progmem
+volatile uint16_t                posregister[8][8]={}; // Aktueller screen: werte fuer page und daraufliegende col fuer Menueintraege (hex). geladen aus progmem
 
-volatile uint16_t                cursorpos[8][4]={}; // Aktueller screen: werte fuer page und daraufliegende col fuer den cursor
+volatile uint16_t                cursorpos[8][4]={}; // Aktueller screen: werte fuer page und darauf liegende col fuer den cursor
 
 volatile uint8_t                 navcounter=0; // Zaehler fuer Einschalten
 volatile uint16_t                navfix=0; // Stand des loopcounters fuer Einschalten
@@ -88,6 +89,8 @@ volatile uint8_t                 blinkline=0xFF;
 volatile uint8_t                 blinkcol=0xFF;
 volatile char                    blinkzeichen = ' ';
 
+volatile uint16_t                 blink_cursorpos=0xFFFF;
+
 
 volatile uint8_t                 modelnummer=1;
 volatile uint8_t                 Taste=0;
@@ -97,7 +100,7 @@ volatile uint8_t                 programmstatus=0x00;
 volatile uint8_t                 senderstatus=0x00;
 
 volatile uint8_t                 Tastenwert=0;
-volatile uint8_t                 TastaturCount=0;
+volatile uint16_t                 TastaturCount=0;
 volatile uint16_t                manuellcounter=0; // Countr fuer Timeout
 
 volatile uint16_t                mscounter=0; // Counter fuer ms in timer-ISR
@@ -161,18 +164,33 @@ ISR (TIMER0_OVF_vect)
    
    if (mscounter > CLOCK_DIV)
    {
+      programmstatus ^= (1<<MS_DIV);
       mscounter=0;
-      laufsekunde++;
       
-      if (senderstatus & (1<<MOTOR_ON))
+      if (programmstatus & (1<<MS_DIV))
       {
-         motorsekunde++;
+         
+         laufsekunde++;
+         manuellcounter++;
+         
+         if (senderstatus & (1<<MOTOR_ON))
+         {
+            motorsekunde++;
+            if (motorsekunde >= 3600)
+            {
+               motorsekunde = 0;
+            }
+         }
+         
+         if (senderstatus & (1<<STOP_ON))
+         {
+            stopsekunde++;
+            if (stopsekunde >= 3600)
+            {
+               stopsekunde=0;
+            }
+         }
       }
-      if (senderstatus & (1<<STOP_ON))
-      {
-         stopsekunde++;
-      }
-      
    }
    
 
@@ -183,17 +201,34 @@ ISR (TIMER0_OVF_vect)
 uint8_t Tastenwahl(uint8_t Tastaturwert)
 {
    /*
-#define TASTE1		19
+    // Atmega168
+    
+    #define TASTE1		19
+    #define TASTE2		29
+    #define TASTE3		44
+    #define TASTE4		67
+    #define TASTE5		94
+    #define TASTE6		122
+    #define TASTE7		155
+    #define TASTE8		186
+    #define TASTE9		212
+    #define TASTE_L	234
+    #define TASTE0		248
+    #define TASTE_R	255
+   
+   
+   // Atmega328
+#define TASTE1		17
 #define TASTE2		29
 #define TASTE3		44
 #define TASTE4		67
 #define TASTE5		94
 #define TASTE6		122
 #define TASTE7		155
-#define TASTE8		186
-#define TASTE9		212
-#define TASTE_L	230
-#define TASTE0		250
+#define TASTE8		166
+#define TASTE9		214
+#define TASTE_L	234
+#define TASTE0		252
 #define TASTE_R	255
 */
 //lcd_gotoxy(0,0);
@@ -355,13 +390,13 @@ int main (void)
    char_y = 3;
    //display_write_symbol(pfeilvollrechts);
    char_x += FONT_WIDTH;
-   //display_write_str(titelbuffer);
+   //display_write_str(titelbuffer,1);
    
    char_x=0;
    char_y = 4;
 
   // display_write_prop_str(char_y,char_x,0,(unsigned char*)titelbuffer);
-   //display_write_str((unsigned char*)titelbuffer);
+   //display_write_str((unsigned char*)titelbuffer,1);
    
    char_x=0;
    char_y = 5;
@@ -398,66 +433,67 @@ int main (void)
 		
 		if (loopCount0 >=0x08FF)
 		{
-         //if (loopcount1<6)
+         if (loopcount1 % 64==0)
          {
-            uint8_t zeit = loopcount1;
-            
-            char_y = 6;
-            
-            char_height_mul = 1;
-            char_width_mul = 1;
-
-            if (zeit<10)
+            switch (curr_screen)
             {
-               char_x=2*FONT_WIDTH*char_width_mul;
-            }
-            else if (zeit<100)
-            {
-               char_x=1*FONT_WIDTH*char_width_mul;
-            }
-            else
-            {
-               char_x=0;
-            }
-            
-            //if (zeit%2)
-            {
-              // display_inverse(zeit%2);
-            }
+            case 0:
+               {
+            lcd_gotoxy(10,0);
+            lcd_putint(motorsekunde);
+            lcd_putc(' ');
+            lcd_putint(stopsekunde);
             //display_write_symbol(pfeilvollrechts);
             
-            //display_write_int(loopcount1 & 0xFF);
-            //display_write_symbol(diaga);
-            //display_write_char(testchar);
-            //char_height_mul = 1;
-            //char_width_mul = 1;
-            
-            //char_y = 7;
-            //char_x=0;
-            //display_write_min_sek(laufsekunde);
-            //update_screen();
-            
+               }break;
+               
+            case 1: // Setting
+               {
+                  lcd_gotoxy(0,0);
+                  lcd_puthex(curr_cursorzeile);
+                  lcd_putc(' ');
+                  lcd_puthex(curr_cursorspalte);
+                  lcd_putc(' ');
+                  lcd_puthex(((cursorpos[curr_cursorzeile][curr_cursorspalte])& 0xFF00)>>8);
+                  lcd_puthex(cursorpos[curr_cursorzeile][curr_cursorspalte]);
+                  
+                  if (curr_cursorzeile <8 && (cursorpos[curr_cursorzeile+1][curr_cursorspalte] < 0xFFFF))
+                  {
+                     lcd_putc('+');
+                  }
+                  else
+                  {
+                     lcd_putc('-');
+                  }
+                  
+                  lcd_putc(' ');
+                  lcd_puthex(((cursorpos[curr_cursorzeile][curr_cursorspalte])& 0xFF00)>>8);
+                  lcd_putc(' ');
+                  lcd_puthex(cursorpos[curr_cursorzeile][curr_cursorspalte]);
+               }break;
+            } // switch curr_screen
          }
 			LOOPLED_PORT ^= (1<<LOOPLED_PIN);
 			loopcount1++;
          if (programmstatus &(1<<MANUELL))
          {
-            manuellcounter++; // timeout von MANUELL incr.
+            //manuellcounter++; // timeout von MANUELL incr.
          }
          
          if (loopcount1 % 16==0)
          {
             //batteriespannung = adc_read(0)/0x40; // ca. 6V
             batteriespannung = adc_read(0); // ca. 6V
-
-            lcd_gotoxy(0,0);
-            lcd_putint12(batteriespannung);
-            lcd_putc(' ');
-           // lcd_putdez(batteriespannung, 2);
-            //lcd_put_frac(' ', batteriespannung/100, 1, batteriespannung%100);
+            //lcd_gotoxy(0,1);
+            //lcd_putint(updatecounter);
+            
+            //lcd_gotoxy(0,0);
+            //lcd_putint12(batteriespannung);
+            //uint16_t balkenhoehe =(batteriespannung-MINSPANNUNG)*64/(MAXSPANNUNG-MINSPANNUNG);
             //lcd_put_spannung(batteriespannung);
 
-           // laufsekunde++;
+            // laufsekunde++;
+            
             if (laufsekunde == 60)
             {
                laufminute++;
@@ -472,11 +508,6 @@ int main (void)
          //lcd_putint(updatecounter);
          //lcd_putint(motorsekunde);
  
-         //volatile uint8_t jahr=0;
-         //jahr = eeprom_read_byte(&EEjahr);
-         //lcd_gotoxy(0,1);
-         //lcd_putint(jahr);
-
          
         // write_zahl_lcd(1,2,eeprom_read_byte(&EEjahr),2);
          //write_zahl_lcd(5,0,17,2);
@@ -490,8 +521,16 @@ int main (void)
                programmstatus &= ~(1<<MANUELL);
                manuellcounter=0;
 					MANUELL_PORT &= ~(1<<MANUELLPIN);
+               display_clear();
+               curr_screen=0;
+               curr_cursorspalte=0;
+               curr_cursorzeile=0;
+               last_cursorspalte=0;
+               last_cursorzeile=0;
+               sethomescreen();
+
 				}
-				// 
+				//
 			}
          
          if (programmstatus &(1<<MANUELL)) // Rueckwaertszaehlen fuer delay bis pagewechsel
@@ -511,7 +550,7 @@ int main (void)
 		/* ******************** */
 		//initADC(TASTATURPIN);
 		//Tastenwert=(readKanal(TASTATURPIN)>>2);
-		if (loopCount0%64==1)
+		if (loopCount0%128==1)
       {
          
          Tastenwert=adc_read(TASTATURPIN)>>2;
@@ -536,15 +575,26 @@ int main (void)
              */
             
             TastaturCount++;
-            if (TastaturCount>=200)
+            if ((TastaturCount>=400) )
             {
+               /*
+               lcd_gotoxy(0,1);
                
+               lcd_putc(' ');lcd_putc(' ');lcd_putc(' ');
+               lcd_gotoxy(0,1);
                
+               lcd_putint12(TastaturCount);
+              lcd_putc(' ');
+               */
                lcd_gotoxy(16,1);
                lcd_puts("T:\0");
                //lcd_putint(Tastenwert);
-               //lcd_putc(' ');
-               //lcd_gotoxy(5,1);
+               lcd_putc(' ');
+               lcd_putc(' ');
+               
+               
+               lcd_gotoxy(18,1);
+               
                Taste=Tastenwahl(Tastenwert);
                lcd_putint2(Taste);
                //lcd_putc(' ');
@@ -600,29 +650,90 @@ int main (void)
                      {
                         manuellcounter=0;
                         
-                        
-                        
                      }
                   }break;
                      
                   case 2://
                   {
-                     if (curr_cursorzeile  && (cursorpos[curr_cursorzeile-1][curr_cursorspalte] < 0xFFFF))
-                     {
-                        last_cursorzeile =curr_cursorzeile;
-                        curr_cursorzeile--;
-                        
-                        lcd_putc('+');
-                     }
-                     else
-                     {
-                        lcd_putc('-');
-                     }
                      
-                     lcd_putc(' ');
-                     lcd_puthex(((cursorpos[curr_cursorzeile][curr_cursorspalte])& 0xFF00)>>8);
+                     switch (curr_screen)
+                     {
+                        case 0: // home
+                        {
+                           
+                        }break;
+                        case 1: // Settings
+                        {
+                           if (blink_cursorpos == 0xFFFF)
+                           {
+                              /*
+                               lcd_gotoxy(0,0);
+                               lcd_puthex(curr_cursorzeile);
+                               lcd_putc(' ');
+                               lcd_puthex(curr_cursorspalte);
+                               lcd_putc(' ');
+                               lcd_puthex(((cursorpos[curr_cursorzeile][curr_cursorspalte])& 0xFF00)>>8);
+                               lcd_puthex(cursorpos[curr_cursorzeile][curr_cursorspalte]);
+                               */
+                              lcd_gotoxy(0,1);
+                              if (curr_cursorzeile  && (cursorpos[curr_cursorzeile-1][curr_cursorspalte] < 0xFFFF))
+                              {
+                                 last_cursorzeile =curr_cursorzeile;
+                                 curr_cursorzeile--;
+                                 lcd_putc('+');
+                              }
+                              else
+                              {
+                                 
+                                 lcd_putc('-');
+                              }
+                              lcd_putint2(curr_cursorzeile);
+                              
+                              lcd_putc(' ');
+                              //lcd_puthex(((cursorpos[curr_cursorzeile][curr_cursorspalte])& 0xFF00)>>8);
+                              
+                              //lcd_puthex(cursorpos[curr_cursorzeile][curr_cursorspalte]);
+                              
+                              /*
+                               lcd_putc(' ');
+                               lcd_puthex(((cursorpos[curr_cursorzeile][curr_cursorspalte])& 0xFF00)>>8);
+                               lcd_putc(' ');
+                               lcd_puthex(cursorpos[curr_cursorzeile][curr_cursorspalte]);
+                               */
+                              
+                           }
+                           else
+                           {
+                              switch((blink_cursorpos & 0xFF00)>>8) //
+                              {
+                                 case MODELLCURSOR: // modell
+                                 {
+                                    if (curr_model )
+                                    {
+                                       curr_model--;
+                                    }
+                                    
+                                 }break;
+                                    
+                                 case  KANALCURSOR:
+                                 {
+                                    
+                                 }break;
+                                 case  MIXCURSOR:
+                                 {
+                                    
+                                 }break;
+                                    //
+                                    
+                              }// switch
+                           }
+                           
+                           
+                        }break;
+                     }// switch
+
                      
-                     lcd_puthex(cursorpos[curr_cursorzeile][curr_cursorspalte]);
+                     
                      
                      
                      if (programmstatus & (1<<MANUELL))
@@ -660,11 +771,12 @@ int main (void)
                      {
                         case 0:
                         {
+                           programmstatus |= (1<<MANUELL); // reset auf homescreen nach timeout
                            //lcd_gotoxy(6,1);
                            //lcd_puts("set ");
                            delay_ms(20);
                            display_clear();
-                           setmenuscreen();
+                           setsettingscreen();
                            curr_screen = 1;
                            curr_cursorspalte=0;
                            curr_cursorzeile=0;
@@ -674,10 +786,34 @@ int main (void)
                            
                         }break;
                            
-                        case 1: // titel
+                        case 1: // setting
                         {
-                           lcd_gotoxy(10,1);
-                           lcd_puts("reset");
+                           lcd_gotoxy(6,1);
+                           lcd_puts(" set");
+                           lcd_putint2(curr_cursorzeile);
+                           lcd_putc(' ');
+                           lcd_putint2(curr_cursorspalte);
+                           switch (curr_cursorzeile)
+                           {
+                              case 0: // Modell
+                              {
+                                 blink_cursorpos =  cursorpos[0][0]; // modellcursor
+                                 
+                              }break;
+                              case 1: // Kanal
+                              {
+                                 blink_cursorpos =  cursorpos[1][0]; // modellcursor
+
+                              }break;
+                              case 2: // Mix
+                              {
+                                 blink_cursorpos =  cursorpos[2][0]; // modellcursor
+
+                              }break;
+                                 
+                                 
+                           }// switch curr_cursorzeile
+                           
 
                         }break;
                      }
@@ -719,32 +855,72 @@ int main (void)
                   case 7://home, in wenn 3* click aus default
                   {
                      
-                     manuellcounter=0; // timeout zuruecksetzen
-                     if (curr_screen)
+                     //manuellcounter=0; // timeout zuruecksetzen
+                     
+                     if (curr_screen) // nicht homescreen
                      {
+                        
                         curr_screen--;
-                      }
-                     switch (curr_screen)
+                        manuellcounter=0;
+                        switch (curr_screen)
                         {
                            case 0:
                            {
                               //lcd_gotoxy(6,1);
                               //lcd_puts("home");
-                              delay_ms(20);
+                              //delay_ms(20);
                               display_clear();
                               curr_screen=0;
                               curr_cursorspalte=0;
                               curr_cursorzeile=0;
                               last_cursorspalte=0;
                               last_cursorzeile=0;
-                              
+                              blink_cursorpos = 0xFFFF;
                               sethomescreen();
                            }break;
                               
+                           case 1:
+                           {
+                              if (blink_cursorpos == 0xFFFF)
+                              {
+                                 
+                              }
+                              else
+                              {
+                                 switch((blink_cursorpos & 0xFF00)>>8) //
+                                 {
+                                    case MODELLCURSOR: // modell
+                                    {
+                                       blink_cursorpos = 0xFFFF;
+                                    }break;
+                                       
+                                    case  KANALCURSOR:
+                                    {
+                                       
+                                    }break;
+                                    case  MIXCURSOR:
+                                    {
+                                       
+                                    }break;
+                                       //
+                                       
+                                 }// switch
+                              }
+                           }break;
                               
                               
                         }// switch
-                     
+                     }
+                     else // schon homescreen, motorzeit reset
+                     {
+                        if (manuellcounter) // kurz warten
+                        {
+                           senderstatus &= ~(1<<MOTOR_ON);
+                           motorsekunde=0;
+                           manuellcounter=0; // timeout zuruecksetzen
+                        }
+                     }
+
                      
                      /*
                       navscreen --;
@@ -763,35 +939,89 @@ int main (void)
                      
                   case 8://
                   {
-                     lcd_gotoxy(0,0);
-                     lcd_puthex(curr_cursorzeile);
-                     lcd_putc(' ');
-                     lcd_puthex(curr_cursorspalte);
-                     lcd_putc(' ');
-                     lcd_puthex(((cursorpos[curr_cursorzeile][curr_cursorspalte])& 0xFF00)>>8);
-                     lcd_puthex(cursorpos[curr_cursorzeile][curr_cursorspalte]);
-                     
-                     if (curr_cursorzeile <8 && (cursorpos[curr_cursorzeile+1][curr_cursorspalte] < 0xFFFF))
+                     switch (curr_screen)
                      {
-                        last_cursorzeile =curr_cursorzeile;
-                        curr_cursorzeile++;
-                        lcd_putc('+');
-                     }
-                     else
-                     {
-                        lcd_putc('-');
-                     }
-                     
-                     lcd_putc(' ');
-                     lcd_puthex(((cursorpos[curr_cursorzeile][curr_cursorspalte])& 0xFF00)>>8);
-                     
-                     lcd_puthex(cursorpos[curr_cursorzeile][curr_cursorspalte]);
+                        case 0: // home
+                        {
+                           
+                        }break;
+                        case 1: // Settings
+                        {
+                           if (blink_cursorpos == 0xFFFF)
+                           {
+                              /*
+                               lcd_gotoxy(0,0);
+                               lcd_puthex(curr_cursorzeile);
+                               lcd_putc(' ');
+                               lcd_puthex(curr_cursorspalte);
+                               lcd_putc(' ');
+                               lcd_puthex(((cursorpos[curr_cursorzeile][curr_cursorspalte])& 0xFF00)>>8);
+                               lcd_puthex(cursorpos[curr_cursorzeile][curr_cursorspalte]);
+                               */
+                              lcd_gotoxy(0,1);
+                              if (curr_cursorzeile <8 && (cursorpos[curr_cursorzeile+1][curr_cursorspalte] < 0xFFFF))
+                              {
+                                 last_cursorzeile =curr_cursorzeile;
+                                 curr_cursorzeile++;
+                                 
+                                 lcd_putc('+');
+                              }
+                              else
+                              {
+                                 
+                                 lcd_putc('-');
+                              }
+                              lcd_putint2(curr_cursorzeile);
+                              lcd_putc(' ');
+                              /*
+                               lcd_putc(' ');
+                               lcd_puthex(((cursorpos[curr_cursorzeile][curr_cursorspalte])& 0xFF00)>>8);
+                               lcd_putc(' ');
+                               lcd_puthex(cursorpos[curr_cursorzeile][curr_cursorspalte]);
+                               */
+
+                           }
+                           else
+                           {
+                              switch((blink_cursorpos & 0xFF00)>>8) //
+                              {
+                                 case MODELLCURSOR: // modell
+                                 {
+                                    if (curr_model < 8)
+                                    {
+                                       curr_model++;
+                                    }
+                                 
+                                 }break;
+                                    
+                                 case  KANALCURSOR:
+                                 {
+                                    
+                                 }break;
+                                 case  MIXCURSOR:
+                                 {
+                                    
+                                 }break;
+                                    //
+                                    
+                              }// switch
+                           }
+
+                           
+                        }break;
+                     }// switch
                      
                   }break;
                      
                   case 9://set, out wenn auf home
                   {
-                     
+                     if (manuellcounter) // kurz warten
+                     {
+                        senderstatus &= ~(1<<STOP_ON);
+                        stopsekunde=0;
+                        manuellcounter=0; // timeout zuruecksetzen
+                     }
+
                   }break;
                      
                      

@@ -8,8 +8,10 @@
 
 #include <stdio.h>
 
-#define CLOCK_DIV 110 // timer0 1 Hz
+#define CLOCK_DIV 55 // timer0 1 Hz bei Teilung /2 in ISR
 
+// Atmega168
+/*
 #define TASTE1		19
 #define TASTE2		29
 #define TASTE3		44
@@ -22,6 +24,21 @@
 #define TASTE_L	234
 #define TASTE0		248
 #define TASTE_R	255
+*/
+
+// Atmega328
+#define TASTE1		17
+#define TASTE2		29
+#define TASTE3		44
+#define TASTE4		67
+#define TASTE5		94
+#define TASTE6		122
+#define TASTE7		155
+#define TASTE8		190
+#define TASTE9		214
+#define TASTE_L	234
+#define TASTE0		252
+#define TASTE_R	255
 
 
 #define TASTATURPORT PORTC
@@ -33,7 +50,8 @@
 
 #define MANUELL			7	// Bit 7 von Status
 #define MANUELLPIN		3	// Pin 6 von PORT D fuer Anzeige Manuell
-//#define MANUELLNEU		7	// Pin 7 von Status. Gesetzt wenn neue Schalterposition eingestellt
+
+#define MS_DIV		7	// Pin 7 von Status. Gesetzt wenn neue Schalterposition eingestellt
 #define MANUELLTIMEOUT	100 // Loopled-counts bis Manuell zurueckgesetzt wird. 02FF: ca. 100 s
 #define MINWAIT         3 // Anzahl loops von loopcount1 bis einschalten
 
@@ -57,7 +75,7 @@
 #define DOGM_CMD_PIN	3
 
 #define MOTOR_ON     1
-#define STOP_ON     1
+#define STOP_ON     2
 
 
 

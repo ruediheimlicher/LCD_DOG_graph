@@ -36,6 +36,9 @@
 #define DOG_SCL      3
 #define DOG_DATA     5
 
+#define MAXSPANNUNG  756
+#define MINSPANNUNG  500
+
 
 // SOFT-SPI defines
 
@@ -148,25 +151,31 @@ volatile uint8_t itemtab[4] = {8,48,72,104};
 	void display_clear(void);
 	void display_go_to (unsigned char, unsigned char);
 	void display_back_char (void);
-	
+void display_write_byte(unsigned cmd_data, unsigned char data);
+
 	void display_write_char(unsigned char);
-	void display_write_str(char *str);
-void display_write_inv_str(char *str);
+void display_write_propchar(unsigned char c, uint8_t prop);
+void display_write_simple_propchar(unsigned char c, uint8_t prop, uint8_t offset);
+
+
+	void display_write_str(char *str, uint8_t prop);
+void display_write_inv_str(char *str, uint8_t prop);
 
 	void display_write_P (const char *Buffer,...);
 
-void display_write_int(uint8_t zahl);
+void display_write_int(uint8_t zahl, uint8_t prop);
 void display_inverse(uint8_t inv);
 uint8_t spi_out(uint8_t dataout);
 void display_write_symbol(PGM_P symbol);
 
 void display_pfeilvollrechts(uint8_t col, uint8_t page);
-void display_write_min_sek(uint16_t rawsekunde);
+void display_write_min_sek(uint16_t rawsekunde, uint8_t prop);
 void display_writeprop_str(uint8_t page, uint8_t column, uint8_t inverse, const uint8_t *pChain);
 
-void display_write_prop_str(uint8_t page, uint8_t column, uint8_t inverse, const uint8_t *pChain);
+void display_write_prop_str(uint8_t page, uint8_t column, uint8_t inverse, const uint8_t *pChain, uint8_t prop);
 
-void display_write_spannungbis10(uint8_t rawspannung); // eine Dezimale
+void display_write_spannung(uint16_t rawspannung, uint8_t prop); // eine Dezimale
+void display_akkuanzeige (uint16_t spannung);
 void r_uitoa8(int8_t zahl, char* string);
 
 uint8_t update_screen(void);

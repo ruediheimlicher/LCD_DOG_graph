@@ -25,6 +25,6 @@ void sethomescreen(void)
 //   char_width_mul = 2;
    //display_write_prop_str(char_y,char_x,0,(unsigned char*)titelbuffer);
    
-   display_write_str(titelbuffer);
+   display_write_str(titelbuffer,1);
 
 }
