@@ -62,7 +62,6 @@ void ST7036_write_byte( char data )
 		//Set_Bit(ST7036_CLK);
       DOG_PORT |= (1<<DOG_CLK);
       
-      
 		c_data = c_data << 1;
 		u8_zahl --;
       

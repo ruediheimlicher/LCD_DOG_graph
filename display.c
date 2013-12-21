@@ -19,12 +19,26 @@
 #include "font.h"
 #include "text.h"
 
+extern volatile uint8_t levelwert;
+extern volatile uint8_t levelb;
+
+
+extern volatile uint8_t expowert;
+extern volatile uint8_t expob;
+
+
 extern volatile uint16_t      laufsekunde;
 extern volatile uint8_t       curr_screen;
 extern volatile uint8_t       curr_page; // aktuelle page
 extern volatile uint8_t       curr_col; // aktuelle colonne
 extern volatile uint8_t       curr_model; // aktuelles modell
 extern volatile uint8_t       curr_kanal; // aktueller kanal
+
+extern volatile uint8_t       curr_richtung; // aktuelle richtung
+
+
+
+
 extern volatile uint8_t       curr_setting;
 extern volatile uint8_t       curr_cursorzeile; // aktuelle zeile des cursors
 extern volatile uint8_t       curr_cursorspalte; // aktuelle colonne des cursors
@@ -40,7 +54,7 @@ extern volatile uint16_t batteriespannung;
 
 extern volatile uint16_t  posregister[8][8]; // Aktueller screen: werte fuer page und daraufliegende col fuer Menueintraege (hex). geladen aus progmem
 
-extern volatile uint16_t  cursorpos[8][4]; // Aktueller screen: werte fuer page und daraufliegende col fuer cursor (hex). geladen aus progmem
+extern volatile uint16_t  cursorpos[8][8]; // Aktueller screen: werte fuer page und daraufliegende col fuer cursor (hex). geladen aus progmem
 
 // 
 extern volatile uint16_t              updatecounter; // Zaehler fuer Einschalten
@@ -61,10 +75,21 @@ extern volatile uint16_t              updatecounter; // Zaehler fuer Einschalten
  write_dogm(0xAF,A0);  // Display on/off
 
  */
+#define HOMESCREEN      0
+#define SETTINGSCREEN   1
+#define KANALSCREEN     2
+#define LEVELSCREEN     3
+#define EXPOSCREEN      4
 
-#define MIXCURSOR 7
-#define MODELLCURSOR 3
+#define MODELLCURSOR 2
+#define SETCURSOR    4
 #define KANALCURSOR  6
+#define MIXCURSOR    7
+
+#define KANALTEXTCURSOR 1
+#define KANALNUMMERCURSOR  3
+
+
 
 const char balken[8]=
 {0x80,0xC0,0xE0,0xF0,0xF8,0xFC,0xFE,0xFF};
@@ -192,29 +217,39 @@ void sethomescreen(void)
 
 void setsettingscreen(void)
 {
-   posregister[0][0] =  cursortab[0] |   (MODELLCURSOR << 8); // modellcursor
+   posregister[0][0] =  cursortab[0] |   (MODELLCURSOR << 8); // modellcursor lo: tab hi: page
    posregister[0][1] =  itemtab[0] |    (0x02 << 8); // Modelltext
    posregister[0][2] =  itemtab[1] |    (0x02 << 8); // Modellnummer
-   posregister[0][3] =  itemtab[0] |    (0x03 << 8); // Modellname
+   
+   posregister[0][3] =  itemtab[0] |    (0x02 << 8); // Modellname
+
+   posregister[1][0] =  cursortab[0] |    (SETCURSOR << 8); // settingcursor
+   posregister[1][1] =  itemtab[0] |    (0x04 << 8); // settingtext
+   
+   posregister[1][2] =  cursortab[2] |    (0x04 << 8); // settingnummercursor
+   posregister[1][3] =  itemtab[2] |    (0x04 << 8); // settingnummer
 
    
-   posregister[1][0] =  cursortab[0] |    (KANALCURSOR << 8); // kanalcursor
-   posregister[1][1] =  itemtab[0] |    (0x06 << 8); // Kanaltext
-   posregister[1][2] =  itemtab[1] |    (0x06 << 8); // kanalnummer
+   posregister[2][0] =  cursortab[0] |    (KANALCURSOR << 8); // kanalcursor
+   posregister[2][1] =  itemtab[0] |    (0x06 << 8); // Kanaltext
+   posregister[2][2] =  itemtab[1] |    (0x06 << 8); // kanalnummer
    
    
-   posregister[2][0] =  cursortab[0] |    (MIXCURSOR << 8); // mixcursor
-   posregister[2][1] =  itemtab[0] |    (0x07 << 8); // mixtext
-   posregister[2][2] =  itemtab[1] |    (0x07 << 8); // mixnummer
+   posregister[3][0] =  cursortab[0] |    (MIXCURSOR << 8); // mixcursor
+   posregister[3][1] =  itemtab[0] |    (0x07 << 8); // mixtext
+   posregister[3][2] =  itemtab[1] |    (0x07 << 8); // mixnummer
    
    
    
    cursorpos[0][0] =posregister[0][0]; // cursorpos fuer model zeile/colonne
-   cursorpos[1][0] =posregister[1][0]; // cursorpos fuer kanal
-   cursorpos[2][0] =posregister[2][0]; // cursorpos fuer mix
+   cursorpos[1][0] =posregister[1][0]; // cursorpos fuer setting
+   cursorpos[1][1] =posregister[1][2]; // cursorpos fuer settingnummer
+ 
+   cursorpos[2][0] =posregister[2][0]; // cursorpos fuer kanal
+   cursorpos[3][0] =posregister[3][0]; // cursorpos fuer mix
   
    
-   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(SettingTable[0])));
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(SettingTable[0]))); // "Settings"
    char_x=0;
    char_y = 1;
    char_height_mul = 1;
@@ -230,13 +265,15 @@ void setsettingscreen(void)
    char_y= (posregister[0][1] & 0xFF00)>>8;
    char_x = posregister[0][1] & 0x00FF;
    
-   display_write_str(menubuffer,1);
+ //  display_write_str(menubuffer,1);
    
+   
+   // Modell Name
    char_y= (posregister[0][2] & 0xFF00)>>8;
    char_x = posregister[0][2] & 0x00FF;
   // display_write_int(curr_model,2);
 
-   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(ModelTable[curr_model])));
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(ModelTable[curr_model]))); // Modellname
    char_y= (posregister[0][3] & 0xFF00)>>8;
    char_x = posregister[0][3] & 0x00FF;
    char_height_mul = 2;
@@ -250,8 +287,9 @@ void setsettingscreen(void)
    char_y= (posregister[0][0] & 0xFF00)>>8;
    char_x = posregister[0][0] & 0x00FF;
    display_write_symbol(pfeilvollrechts);
-
-   // Kanal-Zeile
+   
+   
+   // Setting-Zeile
    strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(SettingTable[2])));
    char_y= (posregister[1][1] & 0xFF00)>>8;
    char_x = posregister[1][1] & 0x00FF;
@@ -260,10 +298,11 @@ void setsettingscreen(void)
    
    char_y= (posregister[1][2] & 0xFF00)>>8;
    char_x = posregister[1][2] & 0x00FF;
-   display_write_int(curr_kanal,2);
-
+   //display_write_int(curr_kanal,2);
+ 
    
-   // Mix-Zeile
+
+   // Kanal-Zeile
    strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(SettingTable[3])));
    char_y= (posregister[2][1] & 0xFF00)>>8;
    char_x = posregister[2][1] & 0x00FF;
@@ -272,7 +311,19 @@ void setsettingscreen(void)
    
    char_y= (posregister[2][2] & 0xFF00)>>8;
    char_x = posregister[2][2] & 0x00FF;
-   display_write_int(curr_kanal,2);
+   //display_write_int(curr_kanal,2);
+
+   
+   // Mix-Zeile
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(SettingTable[4])));
+   char_y= (posregister[3][1] & 0xFF00)>>8;
+   char_x = posregister[3][1] & 0x00FF;
+   //char_x=0;
+   display_write_str(menubuffer,2);
+   
+   char_y= (posregister[3][2] & 0xFF00)>>8;
+   char_x = posregister[3][2] & 0x00FF;
+   //display_write_int(curr_kanal,2);
 
    char_y= (posregister[1][0] & 0xFF00)>>8;
    char_x = posregister[1][0] & 0x00FF;
@@ -292,15 +343,316 @@ void setsettingscreen(void)
 }// setsettingscreen
 
 
+void setcanalscreen(void)
+{
+   blink_cursorpos=0xFFFF;
+   posregister[0][0] =  itemtab[0] |    (1 << 8); // Kanaltext
+   posregister[0][1] =  itemtab[1] |    (1 << 8); // Kanalnummer
+   posregister[0][2] =  itemtab[4] |    (1 << 8); // Richtungtext
+   posregister[0][3] =  itemtab[5] |    (1 << 8); // RichtungPfeil
+   
+   // level
+   posregister[1][0] =  itemtab[0] |    (3 << 8); // Leveltext
+   posregister[1][1] =  itemtab[2] |    (3 << 8); // Level A text
+   posregister[1][2] =  itemtab[3] |    (3 << 8); // Level A wert
+   posregister[1][3] =  itemtab[5] |    (3 << 8); // Level B text
+   posregister[1][4] =  itemtab[6] |    (3 << 8); // Level B wert
+   
+   // expo
+   posregister[2][0] =  itemtab[0] |    (5 << 8); // expotext
+   posregister[2][1] =  itemtab[2] |    (5 << 8); // expo A text
+   posregister[2][2] =  itemtab[3] |    (5 << 8); // expo A wert
+   posregister[2][3] =  itemtab[5] |    (5 << 8); // expo B text
+   posregister[2][4] =  itemtab[6] |    (5 << 8); // expo B wert
+   
+   // typ
+   posregister[3][0] =  itemtab[0] |    (8 << 8); // typtext
+   posregister[3][1] =  itemtab[1] |    (8 << 8); // typ wert text
+   posregister[3][2] =  itemtab[2] |    (8 << 8); //
+   posregister[3][3] =  itemtab[3] |    (8 << 8); //
+
+   
+   cursorpos[0][0] =cursortab[0] |   (1 << 8); // cursorpos fuer Kanal zeile/colonne
+   cursorpos[0][1] =cursortab[4] |   (1 << 8); // cursorpos fuer Richtung
+   
+   cursorpos[1][0] =cursortab[0] |   (3 << 8); // cursorpos fuer Level
+   
+   cursorpos[2][0] =cursortab[0] |   (5 << 8); // cursorpos fuer Expo
+   cursorpos[3][0] =cursortab[0] |   (8 << 8); // cursorpos fuer Richtungspfeil
+   cursorpos[4][0] =cursortab[0] |   (8 << 8); // cursorpos fuer Richtungspfeil
+   
+   
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[0]))); // Kanalname
+   char_y= (posregister[0][0] & 0xFF00)>>8;
+   char_x = posregister[0][0] & 0x00FF;
+   char_height_mul = 2;
+   char_width_mul = 1;
+   display_write_str(menubuffer,2);
+   char_height_mul = 2;
+   
+// Richtung anzeigen
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[1]))); // Richtung
+   char_y= (posregister[0][2] & 0xFF00)>>8;
+   char_x = posregister[0][2] & 0x00FF;
+   display_write_str(menubuffer,2);
+
+   char_height_mul = 2;
+   
+ // Level anzeigen
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[2]))); // Leveltext
+   char_y= (posregister[1][0] & 0xFF00)>>8;
+   char_x = posregister[1][0] & 0x00FF;
+   
+   display_write_str(menubuffer,1);
+   
+   char_height_mul = 2;
+ 
+   // Level A text
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[4]))); // Leveltext
+   char_y= (posregister[1][1] & 0xFF00)>>8;
+   char_x = posregister[1][1] & 0x00FF;
+   display_write_str(menubuffer,1);
+ 
+   // Level A wert
+   //strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[2]))); // Level wert A
+   char_y= (posregister[1][2] & 0xFF00)>>8;
+   char_x = posregister[1][2] & 0x00FF;
+   char_width_mul = 2;
+   display_write_int((levelwert & 0x07),1);
+   
+   char_width_mul = 1;
+   char_height_mul = 2;
+   // Level B text
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[5]))); // Leveltext
+   char_y= (posregister[1][3] & 0xFF00)>>8;
+   char_x = posregister[1][3] & 0x00FF;
+   display_write_str(menubuffer,1);
+   
+   // Level B wert
+   //strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[2]))); // Level wert B
+   char_width_mul = 2;
+   char_y= (posregister[1][4] & 0xFF00)>>8;
+   char_x = posregister[1][4] & 0x00FF;
+   display_write_int((levelwert & 0x70)>>4,1);
+
+  
+   // Expo anzeigen
+   
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[3]))); // Leveltext
+   char_y= (posregister[2][0] & 0xFF00)>>8;
+   char_x = posregister[2][0] & 0x00FF;
+   char_width_mul = 1;
+   display_write_str(menubuffer,1);
+
+   
+   // expo A text
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[4]))); //expo text
+   char_y= (posregister[2][1] & 0xFF00)>>8;
+   char_x = posregister[2][1] & 0x00FF;
+   display_write_str(menubuffer,1);
+   
+   // expo A wert
+   //strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[2]))); // expo wert
+   char_y= (posregister[2][2] & 0xFF00)>>8;
+   char_x = posregister[2][2] & 0x00FF;
+   char_width_mul = 2;
+   display_write_int((expowert & 0x03),1);
+   
+   // expo B text
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[5]))); // expo text
+   char_y= (posregister[2][3] & 0xFF00)>>8;
+   char_x = posregister[2][3] & 0x00FF;
+   char_width_mul = 1;
+   display_write_str(menubuffer,1);
+   
+   // expo B wert
+   //strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[2]))); // expo wert
+   char_y= (posregister[2][4] & 0xFF00)>>8;
+   char_x = posregister[2][4] & 0x00FF;
+   char_width_mul = 2;
+   display_write_int((expowert & 0x30)>>4,1);
+
+   char_height_mul = 1;
+
+   
+   // Art anzeigen
+   
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[6]))); // Arttext
+   char_y= (posregister[3][0] & 0xFF00)>>8;
+   char_x = posregister[3][0] & 0x00FF;
+   char_width_mul = 1;
+   display_write_str(menubuffer,2);
+   
+   
+   
+   // Art wert
+   uint8_t kanaltyp =(expowert & 0x0C)>>2;
+   //strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[2]))); // Art wert
+   char_y= (posregister[3][2] & 0xFF00)>>8;
+   char_x = posregister[3][2] & 0x00FF;
+   char_width_mul = 1;
+   display_write_int(kanaltyp,2);
+
+   // Art Name
+   
+
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTypTable[kanaltyp]))); // Art wert
+   
+   char_y= (posregister[3][3] & 0xFF00)>>8;
+   char_x = posregister[3][3] & 0x00FF;
+   char_width_mul = 1;
+    display_write_str(menubuffer,2);
+
+   
+   char_height_mul = 1;
+
+   
+   
+   
+}
+
+void setlevelscreen(void)
+{
+   blink_cursorpos=0xFFFF;
+   posregister[0][0] =  itemtab[0] |    (1 << 8); // Leveltext
+   posregister[0][1] =  itemtab[1] |    (1 << 8); // Kanalnummer
+   posregister[0][2] =  itemtab[4] |    (1 << 8); // Richtungtext
+   posregister[0][3] =  itemtab[5] |    (1 << 8); // RichtungPfeil
+   
+   // level
+   posregister[1][0] =  itemtab[0] |    (1 << 8); // Leveltext
+   posregister[1][1] =  itemtab[2] |    (1 << 8); // Level A text
+   posregister[1][2] =  itemtab[3] |    (1 << 8); // Level A wert
+   posregister[1][3] =  itemtab[5] |    (1 << 8); // Level B text
+   posregister[1][4] =  itemtab[6] |    (1 << 8); // Level B wert
+   
+   //
+   posregister[2][0] =  itemtab[0] |    (5 << 8); // expotext
+   posregister[2][1] =  itemtab[2] |    (5 << 8); // expo A text
+   posregister[2][2] =  itemtab[3] |    (5 << 8); // expo A wert
+   posregister[2][3] =  itemtab[5] |    (5 << 8); // expo B text
+   posregister[2][4] =  itemtab[6] |    (5 << 8); // expo B wert
+   
+   // typ
+   posregister[3][0] =  itemtab[0] |    (8 << 8); // typtext
+   posregister[3][1] =  itemtab[1] |    (8 << 8); // typ wert text
+   posregister[3][2] =  itemtab[2] |    (8 << 8); //
+   posregister[3][3] =  itemtab[3] |    (8 << 8); //
+   
+   
+   cursorpos[0][0] =cursortab[0] |   (1 << 8); // cursorpos fuer
+   cursorpos[0][1] =cursortab[4] |   (1 << 8); // cursorpos fuer
+   
+   cursorpos[1][0] =cursortab[0] |   (3 << 8); // cursorpos fuer
+   
+   cursorpos[2][0] =cursortab[0] |   (5 << 8); // cursorpos fuer
+   cursorpos[3][0] =cursortab[0] |   (8 << 8); // cursorpos fuer
+   cursorpos[4][0] =cursortab[0] |   (8 << 8); // cursorpos fuer
+   
+   
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[2]))); // Level
+   char_y= (posregister[0][0] & 0xFF00)>>8;
+   char_x = posregister[0][0] & 0x00FF;
+   char_height_mul = 2;
+   char_width_mul = 1;
+   display_write_str(menubuffer,2);
+   char_height_mul = 2;
+   
+   // Level A text
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[4]))); // Leveltext
+   char_y= (posregister[1][1] & 0xFF00)>>8;
+   char_x = posregister[1][1] & 0x00FF;
+   display_write_str(menubuffer,1);
+   
+   // Level A wert
+   //strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[2]))); // Level wert A
+   char_y= (posregister[1][2] & 0xFF00)>>8;
+   char_x = posregister[1][2] & 0x00FF;
+   char_width_mul = 2;
+   display_write_int((levelwert & 0x07),1);
+   
+   char_width_mul = 1;
+   char_height_mul = 2;
+   // Level B text
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[5]))); // Leveltext
+   char_y= (posregister[1][3] & 0xFF00)>>8;
+   char_x = posregister[1][3] & 0x00FF;
+   display_write_str(menubuffer,1);
+   
+   // Level B wert
+   //strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[2]))); // Level wert B
+   char_width_mul = 2;
+   char_y= (posregister[1][4] & 0xFF00)>>8;
+   char_x = posregister[1][4] & 0x00FF;
+   display_write_int((levelwert & 0x70)>>4,1);
+
+   //display_diagramm (uint8_t char_x, uint8_t char_y, uint8_t stufe, uint8_t typ, uint8_t seite)
+   
+
+}
+
+void setexposcreen(void)
+{
+   blink_cursorpos=0xFFFF;
+   posregister[0][0] =  itemtab[0] |    (1 << 8); // Expotext
+   posregister[0][1] =  itemtab[1] |    (1 << 8); // Exponummer
+   posregister[0][2] =  itemtab[4] |    (1 << 8); // Richtungtext
+   posregister[0][3] =  itemtab[5] |    (1 << 8); // RichtungPfeil
+   
+   // level
+   posregister[1][0] =  itemtab[0] |    (1 << 8); // Leveltext
+   posregister[1][1] =  itemtab[2] |    (1 << 8); // Level A text
+   posregister[1][2] =  itemtab[3] |    (1 << 8); // Level A wert
+   posregister[1][3] =  itemtab[5] |    (1 << 8); // Level B text
+   posregister[1][4] =  itemtab[6] |    (1 << 8); // Level B wert
+   
+   //
+   posregister[2][0] =  itemtab[0] |    (5 << 8); // expotext
+   posregister[2][1] =  itemtab[2] |    (5 << 8); // expo A text
+   posregister[2][2] =  itemtab[3] |    (5 << 8); // expo A wert
+   posregister[2][3] =  itemtab[5] |    (5 << 8); // expo B text
+   posregister[2][4] =  itemtab[6] |    (5 << 8); // expo B wert
+   
+   // typ
+   posregister[3][0] =  itemtab[0] |    (8 << 8); // typtext
+   posregister[3][1] =  itemtab[1] |    (8 << 8); // typ wert text
+   posregister[3][2] =  itemtab[2] |    (8 << 8); //
+   posregister[3][3] =  itemtab[3] |    (8 << 8); //
+   
+   
+   cursorpos[0][0] =cursortab[0] |   (1 << 8); // cursorpos fuer
+   cursorpos[0][1] =cursortab[4] |   (1 << 8); // cursorpos fuer
+   
+   cursorpos[1][0] =cursortab[0] |   (3 << 8); // cursorpos fuer
+   
+   cursorpos[2][0] =cursortab[0] |   (5 << 8); // cursorpos fuer
+   cursorpos[3][0] =cursortab[0] |   (8 << 8); // cursorpos fuer
+   cursorpos[4][0] =cursortab[0] |   (8 << 8); // cursorpos fuer
+   
+   
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[3]))); // Expo
+   char_y= (posregister[0][0] & 0xFF00)>>8;
+   char_x = posregister[0][0] & 0x00FF;
+   char_height_mul = 2;
+   char_width_mul = 1;
+   display_write_str(menubuffer,2);
+   char_height_mul = 2;
+   
+}
+
 
 
 
 uint8_t update_screen(void)
 {
+   uint16_t cursorposition = cursorpos[curr_cursorzeile][curr_cursorspalte];
+
    switch (curr_screen)
    {
-      case 0: // homescreen
+         
+      case HOMESCREEN: // homescreen
       {
+         #pragma mark update HOMESCREEN
          updatecounter++;
          //Laufzeit
          char_x = posregister[0][0] & 0x00FF;
@@ -341,16 +693,17 @@ uint8_t update_screen(void)
 
       }break;
          
-      case 1: // Setting
+      case SETTINGSCREEN: // Setting
       {
+         #pragma mark update SETTINGSCREEN
          updatecounter++;
-         char_x=90;
+         char_x = 90;
          char_y = 1;
          display_write_min_sek(laufsekunde,2);
 
          char_y= (posregister[0][2] & 0xFF00)>>8;
          char_x = posregister[0][2] & 0x00FF;
-         display_write_int(curr_model,2);
+      //   display_write_int(curr_model,2);
          
          if (!((curr_cursorzeile == last_cursorzeile) && (curr_cursorspalte == last_cursorspalte))) // cursorzeile wurde verschoben
          {
@@ -359,27 +712,172 @@ uint8_t update_screen(void)
             // letzte Cursorposition entfernen
             char_y= (lastcursorposition & 0xFF00)>>8;
             char_x = lastcursorposition & 0x00FF;
-            display_write_symbol(pfeilwegrechts);
-            // last updaten
+            if (curr_cursorzeile==0)
+            {
+               char_height_mul = 2;
+            }
+            else
+            {
+               char_height_mul = 2;
+            }
+
+           display_write_symbol(pfeilwegrechts);
             
+            // letzte curserposition updaten
             last_cursorzeile = curr_cursorzeile;
             last_cursorspalte = curr_cursorspalte;
+         
+         char_height_mul = 1;
+         
          }
          
-         uint16_t cursorposition = cursorpos[curr_cursorzeile][curr_cursorspalte];
 
          char_y= (cursorposition & 0xFF00)>>8;
          char_x = cursorposition & 0x00FF;
-         char_height_mul = 1;
-         if (blink_cursorpos == 0xFFFF)
+         if (curr_cursorzeile==0)
          {
-         display_write_symbol(pfeilvollrechts);
+         char_height_mul = 2;
+            display_write_symbol(pfeilvollrechtsklein);
          }
          else
+         {
+            char_height_mul = 1;
+            display_write_symbol(pfeilvollrechts);
+         }
+         if (blink_cursorpos == 0xFFFF) // Kein Blinken des Cursors
+         {
+            
+            
+         }
+         else // Cursor blinkt an blink_cursorpos
          {
             
             char_y= (blink_cursorpos & 0xFF00)>>8;
             char_x = blink_cursorpos & 0x00FF;
+            if (laufsekunde%2)
+            {
+               if (curr_cursorzeile==0)
+               {
+                  char_height_mul = 2;
+                  display_write_symbol(pfeilvollrechtsklein);
+               }
+               else
+               {
+                  char_height_mul = 1;
+                  display_write_symbol(pfeilvollrechts);
+               }
+               
+               
+            }
+            else
+            {
+               if (curr_cursorzeile==0)
+               {
+                  char_height_mul = 2;
+               }
+               else
+               {
+                  char_height_mul = 2;
+               }
+
+               display_write_symbol(pfeilwegrechts);
+            }
+
+         }
+         char_height_mul = 1;
+         
+         // Modellname
+         strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(ModelTable[curr_model])));
+         char_y= (posregister[0][3] & 0xFF00)>>8;
+         char_x = posregister[0][3] & 0x00FF;
+         char_height_mul = 2;
+         char_width_mul = 1;
+         display_write_str(menubuffer,1);
+         char_height_mul = 1;
+         
+         // settingnummer
+         char_y= (posregister[1][3] & 0xFF00)>>8;
+         char_x = posregister[1][3] & 0x00FF;
+         display_write_int(curr_setting,2);
+
+      }break;
+         
+      case KANALSCREEN: // Kanal
+      {
+         #pragma mark update KANALSCREEN
+         // kanalnummer
+         char_y= (posregister[0][1] & 0xFF00)>>8;
+         char_x = posregister[0][1] & 0x00FF;
+         char_height_mul = 2;
+         char_width_mul = 1;
+         display_write_int(curr_kanal,2);
+         
+        // Richtungspfeil anzeigen
+         
+         char_y= (posregister[0][3] & 0xFF00)>>8;
+         char_x = posregister[0][3] & 0x00FF;
+         char_height_mul = 2;
+         char_width_mul = 2;
+        
+         
+         if (curr_kanal%2) // ungerade, waagrecht
+         {
+            if (expowert & 0x80)
+            {
+               display_write_symbol(richtungright);
+            }
+            else
+            {
+               display_write_symbol(richtungleft);
+            }
+
+          }
+         else // senkrecht
+         {
+            if (expowert & 0x80)
+            {
+               display_write_symbol(richtungup);
+            }
+            else
+            {
+               display_write_symbol(richtungdown);
+            }
+
+         }
+         char_height_mul = 1;
+         char_width_mul = 1;
+       
+         
+         if (blink_cursorpos == 0xFFFF) // Kein Blinken des Cursors
+         {
+            char_y= (cursorposition & 0xFF00)>>8;
+            char_x = cursorposition & 0x00FF;
+            if ((curr_cursorspalte <=3)&& (curr_cursorzeile<=2)) //Erste Zeile, Kanalnummer
+            {
+               char_height_mul = 2;
+            }
+            else
+            {
+               char_height_mul = 1;
+            }
+
+            display_write_symbol(pfeilvollrechts);
+            
+         }
+         else // Cursor blinkt an blink_cursorpos
+         {
+            
+            char_y= (blink_cursorpos & 0xFF00)>>8;
+            char_x = blink_cursorpos & 0x00FF;
+            if ((curr_cursorspalte <=1)&& (curr_cursorzeile==1)) //Erste Zeile, Kanalnummer
+            {
+               char_height_mul = 2;
+            }
+            else
+            {
+               char_height_mul = 2;
+            }
+
             if (laufsekunde%2)
             {
                display_write_symbol(pfeilvollrechts);
@@ -388,32 +886,28 @@ uint8_t update_screen(void)
             {
                display_write_symbol(pfeilwegrechts);
             }
-
+            
          }
          char_height_mul = 1;
          
-         strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(ModelTable[curr_model])));
-         char_y= (posregister[0][3] & 0xFF00)>>8;
-         char_x = posregister[0][3] & 0x00FF;
-         char_height_mul = 2;
-         char_width_mul = 1;
-         display_write_str(menubuffer,1);
-         char_height_mul = 1;
-         /*
-         if (laufsekunde%2)
-         {
-            display_write_symbol(pfeilvollrechts);
-         }
-         else
-         {
-            display_write_symbol(pfeilwegrechts);
-         }
-          */
-
       }break;
    }
    return 0;
 }
+
+//##############################################################################################
+// Curser weg an curr position
+//
+//##############################################################################################
+void display_cursorweg(void)
+{
+   uint16_t cursorposition = cursorpos[curr_cursorzeile][curr_cursorspalte];
+   char_y= (cursorposition & 0xFF00)>>8;
+   char_x = cursorposition & 0x00FF;
+   display_write_symbol(pfeilwegrechts);
+   
+}
+
 
 //##############################################################################################
 // Akkuanzeige
@@ -505,6 +999,100 @@ void display_akkuanzeige (uint16_t spannung)
    } // for page
    
 }
+
+//##############################################################################################
+//Diagramm
+//
+//##############################################################################################
+uint8_t display_diagramm (uint8_t char_x, uint8_t char_y, uint8_t stufea, uint8_t stufeb, uint8_t typ )
+{
+   uint8_t pageA=0, pageB=0, col=0;
+   uint16_t wertYA=0 , wertYB=0 ;
+
+   uint8_t maxX=50, maxY=48;
+   uint8_t endY= maxY*(4-stufea)/4; // punkte, nicht page
+   uint8_t page=0;
+   for (page=char_y;page>3;page--) //Ordinate
+   {
+      display_go_to(char_x-maxX,page);
+      display_write_byte(DATA,0xDB); // Strich zeichnen
+
+      display_go_to(char_x,page);
+      display_write_byte(DATA,0xFF); // Strich zeichnen
+      display_go_to(char_x+maxX,page);
+      display_write_byte(DATA,0xDB); // Strich zeichnen
+
+   }
+   //uint16_t steigung= 0xFF*maxY*(4-stufe)/4/maxX; // punkte, nicht page
+   // Steigung = (4-stufe)/4  1:1 ist Stufe 0
+   uint8_t k=0;
+   for (col=1;col<maxX;col++)
+   {
+      wertYA = (4-stufea)*col*0x20/0x32/4;
+      pageA = 7-(wertYA/8);
+      wertYB = (4-stufeb)*col*0x20/0x32/4;
+      pageB = 7-(wertYB/8);
+      
+      for (k=7; k >2; k--)
+      {
+         // Seite B ( rechts)
+         display_go_to(char_x+col,k);
+         if (k == pageB) // Auf dieser Page liegt der Wert
+         {
+            if (col%3==0)
+            {
+               display_write_byte(DATA,(1<<(7-wertYB%8))|0x80); //Punkt zeichnen
+            }
+            else
+            {
+               display_write_byte(DATA,(1<<(7-wertYB%8)));
+            }
+            
+            
+         }
+         else if (col%3==0)
+         {
+            display_write_byte(DATA,0x80); //Punkt zeichnen
+         }
+         
+         // Seite A (links)
+      
+         display_go_to(char_x-col,k);
+         if (k == pageA) // Auf dieser Page liegt der Wert
+         {
+            if (col%3==0)
+            {
+               display_write_byte(DATA,(1<<(7-wertYA%8))|0x80); //Punkt zeichnen
+            }
+            else
+            {
+               display_write_byte(DATA,(1<<(7-wertYA%8)));
+            }
+            
+            
+         }
+         else if (col%3==0)
+         {
+            display_write_byte(DATA,0x80); //Punkt zeichnen
+         }
+       
+
+      
+      }
+      
+      
+      
+      //display_go_to(char_x+col,page);
+      //display_write_byte(DATA,(1<<(7-wertY%8))); //Punkt zeichnen
+   }
+   
+   
+   return 1;
+   
+}
+
+
+
 
 
 

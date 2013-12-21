@@ -141,9 +141,10 @@
 char menubuffer[20];
 char titelbuffer[20];
 
+volatile uint8_t itemtab[8] = {8,48,60,72,84,96,108};
 
-volatile uint8_t cursortab[4] = {0,32,64,96};
-volatile uint8_t itemtab[4] = {8,48,72,104};
+volatile uint8_t cursortab[8] = {0,40,52,64,76,88,100};
+
 
 
 	void display_init(void);
@@ -179,6 +180,8 @@ void display_akkuanzeige (uint16_t spannung);
 void r_uitoa8(int8_t zahl, char* string);
 
 uint8_t update_screen(void);
+
+uint8_t display_diagramm (uint8_t char_x, uint8_t char_y, uint8_t stufea,uint8_t stufeb, uint8_t typ);
 
 
 
