@@ -53,7 +53,12 @@
 
 #define MS_DIV		7	// Pin 7 von Status. Gesetzt wenn neue Schalterposition eingestellt
 #define MANUELLTIMEOUT	100 // Loopled-counts bis Manuell zurueckgesetzt wird. 02FF: ca. 100 s
+
+#define SETTINGWAIT  6  // Pin in status wird gesetzt bis Taste 5 3* gedrueckt ist
+
+
 #define MINWAIT         3 // Anzahl loops von loopcount1 bis einschalten
+
 
 // ADC
 #define ADC_PORT            PORTC   //    PORTF
