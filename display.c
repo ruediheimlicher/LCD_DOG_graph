@@ -221,25 +221,25 @@ void setsettingscreen(void)
 {
    posregister[0][0] =  cursortab[0] |   (MODELLCURSOR << 8); // modellcursor lo: tab hi: page
    posregister[0][1] =  itemtab[0] |    (0x02 << 8); // Modelltext
-   posregister[0][2] =  itemtab[1] |    (0x02 << 8); // Modellnummer
+   posregister[0][2] =  itemtab[2] |    (0x02 << 8); // Modellnummer
    
    posregister[0][3] =  itemtab[0] |    (0x02 << 8); // Modellname
 
    posregister[1][0] =  cursortab[0] |    (SETCURSOR << 8); // settingcursor
    posregister[1][1] =  itemtab[0] |    (0x04 << 8); // settingtext
    
-   posregister[1][2] =  cursortab[2] |    (0x04 << 8); // settingnummercursor
-   posregister[1][3] =  itemtab[2] |    (0x04 << 8); // settingnummer
+   posregister[1][2] =  cursortab[3] |    (0x04 << 8); // settingnummercursor
+   posregister[1][3] =  itemtab[3] |    (0x04 << 8); // settingnummer
 
    
    posregister[2][0] =  cursortab[0] |    (KANALCURSOR << 8); // kanalcursor
    posregister[2][1] =  itemtab[0] |    (0x06 << 8); // Kanaltext
-   posregister[2][2] =  itemtab[1] |    (0x06 << 8); // kanalnummer
+   posregister[2][2] =  itemtab[2] |    (0x06 << 8); // kanalnummer
    
    
    posregister[3][0] =  cursortab[0] |    (MIXCURSOR << 8); // mixcursor
    posregister[3][1] =  itemtab[0] |    (0x07 << 8); // mixtext
-   posregister[3][2] =  itemtab[1] |    (0x07 << 8); // mixnummer
+   posregister[3][2] =  itemtab[2] |    (0x07 << 8); // mixnummer
    
    
    
@@ -351,46 +351,46 @@ void setcanalscreen(void)
    expowert = curr_settingarray[curr_kanal][1];
    blink_cursorpos=0xFFFF;
    posregister[0][0] =  itemtab[0] |    (1 << 8); // Kanaltext
-   posregister[0][1] =  itemtab[1] |    (1 << 8); // Kanalnummer
+   posregister[0][1] =  itemtab[1]+8 |    (1 << 8); // Kanalnummer
    posregister[0][2] =  itemtab[3] |    (1 << 8); // Richtungtext
    posregister[0][3] =  itemtab[4] |    (1 << 8); // RichtungPfeil
    
    posregister[0][4] =  itemtab[5] |    (1 << 8); // typtext
-   posregister[0][5] =  itemtab[6] |    (1 << 8); // typ symbol
+   posregister[0][5] =  itemtab[8] |    (1 << 8); // typ symbol
 
    // level
-   posregister[1][0] =  itemtab[1] |    (2 << 8); // Leveltext
-   posregister[1][1] =  itemtab[2] |    (2 << 8); // Level A text
+   posregister[1][0] =  itemtab[2] |    (2 << 8); // Leveltext
+   posregister[1][1] =  itemtab[3] |    (2 << 8); // Level A text
    posregister[1][2] =  itemtab[0] |    (2 << 8); // Level A wert
-   posregister[1][3] =  itemtab[5] |    (2 << 8); // Level B text
-   posregister[1][4] =  itemtab[6] |    (2 << 8); // Level B wert
+   posregister[1][3] =  itemtab[6] |    (2 << 8); // Level B text
+   posregister[1][4] =  itemtab[7] |    (2 << 8); // Level B wert
    
    // expo
-   posregister[2][0] =  itemtab[1] |    (3 << 8); // expotext
-   posregister[2][1] =  itemtab[2] |    (3 << 8); // expo A text
+   posregister[2][0] =  itemtab[2] |    (3 << 8); // expotext
+   posregister[2][1] =  itemtab[3] |    (3 << 8); // expo A text
    posregister[2][2] =  itemtab[0] |    (3 << 8); // expo A wert
-   posregister[2][3] =  itemtab[5] |    (3 << 8); // expo B text
-   posregister[2][4] =  itemtab[6] |    (3 << 8); // expo B wert
+   posregister[2][3] =  itemtab[6] |    (3 << 8); // expo B text
+   posregister[2][4] =  itemtab[7] |    (3 << 8); // expo B wert
    
    // typ
-   posregister[3][0] =  itemtab[5] |    (1 << 8); // typtext
-   posregister[3][1] =  itemtab[6] |    (1 << 8); // typ wert text
-   posregister[3][2] =  itemtab[2] |    (8 << 8); //
-   posregister[3][3] =  itemtab[3] |    (8 << 8); //
+   posregister[3][0] =  itemtab[6] |    (1 << 8); // typtext
+   posregister[3][1] =  itemtab[7] |    (1 << 8); // typ wert text
+   posregister[3][2] =  itemtab[3] |    (8 << 8); //
+   posregister[3][3] =  itemtab[4] |    (8 << 8); //
 
    
    cursorpos[0][0] =cursortab[0] |   (1 << 8); // cursorpos fuer Kanal zeile/colonne
-   cursorpos[0][1] =cursortab[4] |   (1 << 8); // cursorpos fuer Richtung
+   cursorpos[0][1] =cursortab[3] |   (1 << 8); // cursorpos fuer Richtung
    
-   cursorpos[0][2] =cursortab[5] |   (1 << 8); // cursorpos fuer Art
+   cursorpos[0][2] =cursortab[6] |   (1 << 8); // cursorpos fuer Art
 
    
    
    cursorpos[1][0] =cursortab[0] |   (2 << 8); // cursorpos fuer Levelwert A
-   cursorpos[1][1] =cursortab[6] |   (2 << 8);// cursorpos fuer Levelwert B
+   cursorpos[1][1] =cursortab[7] |   (2 << 8);// cursorpos fuer Levelwert B
 
    cursorpos[2][0] =cursortab[0] |   (3 << 8); // cursorpos fuer Expowert A
-   cursorpos[2][1] =cursortab[6] |   (3 << 8); // cursorpos fuer Expowert B
+   cursorpos[2][1] =cursortab[7] |   (3 << 8); // cursorpos fuer Expowert B
 
    
    cursorpos[3][0] =cursortab[0] |   (4 << 8); // cursorpos fuer Expo
@@ -494,13 +494,13 @@ void setcanalscreen(void)
    char_height_mul = 1;
 
    
-   // Art anzeigen
+   // Typ anzeigen
    
    strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[6]))); // Arttext
    char_y= (posregister[3][0] & 0xFF00)>>8;
    char_x = posregister[3][0] & 0x00FF;
    char_width_mul = 1;
-   display_write_str(menubuffer,1);
+   display_write_str(menubuffer,2);
    
    
    
@@ -830,6 +830,16 @@ uint8_t update_screen(void)
          char_height_mul = 1;
          char_width_mul = 1;
          display_write_int(curr_kanal,2);
+         
+         
+         // Typ anzeigen
+         char_y= (posregister[0][5] & 0xFF00)>>8;
+         char_x = posregister[0][5] & 0x00FF;
+         char_height_mul = 1;
+         char_width_mul = 1;
+         display_write_propsymbol(pitch);
+         
+         
          
         // Richtungspfeil anzeigen
          

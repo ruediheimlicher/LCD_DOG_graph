@@ -141,9 +141,9 @@
 char menubuffer[20];
 char titelbuffer[20];
 
-volatile uint8_t itemtab[8] = {8,48,60,72,84,96,108};
+volatile uint8_t itemtab[10] = {8,32,48,60,72,84,96,108,116,0};
 
-volatile uint8_t cursortab[8] = {0,40,52,64,76,88,100};
+volatile uint8_t cursortab[10] = {0,24,40,52,64,76,88,100,108,0};
 
 const uint8_t PROGMEM  expoarray[50] ={
    0x00,0x01,0x01,0x01,0x02,0x02,0x02,0x03,
