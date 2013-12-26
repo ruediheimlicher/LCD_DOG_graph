@@ -40,7 +40,7 @@ PGM_P const ModelTable[] PROGMEM = {model0, model1, model2, model3, model4, mode
 // Settingscreen
 const char menutitel[] PROGMEM = "Settings";
 const char model[] PROGMEM = "Modell";
-const char setting[] PROGMEM = "Setting";
+const char setting[] PROGMEM = "Set";
 const char kanal[] PROGMEM = "Kanal";
 
 const char mix[] PROGMEM = "Mix";
@@ -66,6 +66,13 @@ const char schiebertyp[] PROGMEM = "Schieber";
 const char schaltertyp[] PROGMEM = "Schalter";
 
 PGM_P const KanalTypTable[] PROGMEM = {pitchtyp,schiebertyp,schaltertyp};
+
+
+// Mix
+const char vmix[] PROGMEM = "V-Mix";
+const char butterfly[] PROGMEM = "B-fly";
+const char mixtitel[] PROGMEM = "Mix:";
+PGM_P const MixTable[] PROGMEM = {vmix,butterfly,mixtitel};
 
 
 // Funktion
