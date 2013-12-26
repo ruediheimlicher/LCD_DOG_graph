@@ -33,11 +33,14 @@ extern volatile uint16_t      laufsekunde;
 extern volatile uint8_t       curr_levelarray[8];
 extern volatile uint8_t       curr_expoarray[8];
 extern volatile uint8_t       curr_mixarray[8];
+extern volatile uint8_t       curr_funktionarray[8];
 
 extern volatile uint8_t       curr_screen;
 extern volatile uint8_t       curr_page; // aktuelle page
 extern volatile uint8_t       curr_col; // aktuelle colonne
 extern volatile uint8_t       curr_model; // aktuelles modell
+
+
 extern volatile uint8_t       curr_kanal; // aktueller kanal
 
 extern volatile uint8_t       curr_richtung; // aktuelle richtung
@@ -86,6 +89,7 @@ extern volatile uint16_t              updatecounter; // Zaehler fuer Einschalten
 #define KANALSCREEN     2
 #define LEVELSCREEN     3
 #define EXPOSCREEN      4
+#define MIXSCREEN       5
 
 #define MODELLCURSOR 2
 #define SETCURSOR    4
@@ -125,12 +129,24 @@ const volatile char DISPLAY_INIT[] =
 //char_height_mul 1, 2 or 4
 volatile unsigned char char_x=0,char_y=1,char_height_mul=1,char_width_mul=1;
 
-
+void resetRegister(void)
+{
+   uint8_t i=0,k=0;
+   for(i=0;i<8;i++)
+   {
+      for (k=0;k<8;k++)
+      {
+         posregister[i][k]=0xFFFF;
+      }
+      
+   }
+}
 
 void sethomescreen(void)
 {
    // Laufzeit
-   posregister[0][0] = 56 | (0x01 << 8);// Laufzeit Anzeige
+   resetRegister();
+   posregister[0][0] = itemtab[5] | (1 << 8);// Laufzeit Anzeige
    
    
    posregister[1][0] = 0 | (0x05 << 8); // Text Motorzeit
@@ -223,6 +239,7 @@ void sethomescreen(void)
 
 void setsettingscreen(void)
 {
+   resetRegister();
    blink_cursorpos=0xFFFF;
    
    posregister[0][0] =  itemtab[0] |    (1 << 8); // titeltext
@@ -317,7 +334,7 @@ void setsettingscreen(void)
    
    char_y= (posregister[3][1] & 0xFF00)>>8;
    char_x = posregister[3][1] & 0x00FF;
-   //display_write_int(curr_kanal,2);
+   //display_write_int(curr_mix,2);
 
    char_y= (posregister[1][0] & 0xFF00)>>8;
    char_x = posregister[1][0] & 0x00FF;
@@ -339,17 +356,18 @@ void setsettingscreen(void)
 
 void setcanalscreen(void)
 {
-  // levelwert = curr_settingarray[curr_kanal][0];
-  // expowert = curr_settingarray[curr_kanal][1];
+   resetRegister();
    blink_cursorpos=0xFFFF;
    
    posregister[0][0] =  itemtab[0] |    (1 << 8); // Kanaltext
-   posregister[0][1] =  (itemtab[1]+8) |    (1 << 8); // Kanalnummer
-   posregister[0][2] =  itemtab[3] |    (1 << 8); // Richtungtext
-   posregister[0][3] =  itemtab[4] |    (1 << 8); // RichtungPfeil
+   posregister[0][1] =  (itemtab[1]) |    (1 << 8); // Kanalnummer
+   posregister[0][2] =  itemtab[2] |    (1 << 8); // Richtungtext
+   posregister[0][3] =  itemtab[3] |    (1 << 8); // RichtungPfeil
    
-   posregister[0][4] =  itemtab[5] |    (1 << 8); // typtext
-   posregister[0][5] =  itemtab[8] |    (1 << 8); // typ symbol
+   posregister[0][4] =  itemtab[5] |    (1 << 8); // funktion
+   
+   
+   posregister[0][5] =  itemtab[8] |    (4 << 8); // typ symbol
 
    // level
    posregister[1][0] =  itemtab[2] |    (2 << 8); // Leveltext
@@ -366,18 +384,17 @@ void setcanalscreen(void)
    posregister[2][4] =  itemtab[7] |    (3 << 8); // expo B wert
    
    // typ
-   posregister[3][0] =  itemtab[6] |    (1 << 8); // typtext
-   posregister[3][1] =  itemtab[7] |    (1 << 8); // typ wert text
-   posregister[3][2] =  itemtab[3] |    (8 << 8); //
-   posregister[3][3] =  itemtab[4] |    (8 << 8); //
+   posregister[3][0] =  itemtab[6] |    (4 << 8); // typtext
+   posregister[3][1] =  itemtab[8] |    (4 << 8); // typ symbol
+   //posregister[3][2] =  itemtab[3] |    (8 << 8); //
+   //posregister[3][3] =  itemtab[4] |    (8 << 8); //
 
    
    cursorpos[0][0] =cursortab[0] |   (1 << 8); // cursorpos fuer Kanal zeile/colonne
-   cursorpos[0][1] =cursortab[3] |   (1 << 8); // cursorpos fuer Richtung
+   cursorpos[0][1] =cursortab[2] |   (1 << 8); // cursorpos fuer Richtung
    
-   cursorpos[0][2] =cursortab[6] |   (1 << 8); // cursorpos fuer Art
+   cursorpos[0][2] =cursortab[5] |   (1 << 8); // cursorpos fuer Funktion
 
-   
    
    cursorpos[1][0] =cursortab[0] |   (2 << 8); // cursorpos fuer Levelwert A
    cursorpos[1][1] =cursortab[7] |   (2 << 8);// cursorpos fuer Levelwert B
@@ -388,6 +405,7 @@ void setcanalscreen(void)
    
    cursorpos[3][0] =cursortab[0] |   (4 << 8); // cursorpos fuer Expo
    cursorpos[3][0] =cursortab[0] |   (1 << 8); // cursorpos fuer Art
+   
    cursorpos[4][0] =cursortab[0] |   (1 << 8); // cursorpos fuer Art
    
    
@@ -406,8 +424,19 @@ void setcanalscreen(void)
    display_write_str(menubuffer,2);
 
    char_height_mul = 1;
+
+   // Funktion anzeigen
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(FunktionTable[curr_kanal]))); // Richtung
+   char_y= (posregister[0][4] & 0xFF00)>>8;
+   char_x = posregister[0][4] & 0x00FF;
+   display_write_str(menubuffer,2);
    
- // Level anzeigen
+   char_height_mul = 1;
+
+ 
+   
+   
+   // Level anzeigen
    strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[2]))); // Leveltext
    char_y= (posregister[1][0] & 0xFF00)>>8;
    char_x = posregister[1][0] & 0x00FF;
@@ -490,26 +519,28 @@ void setcanalscreen(void)
    char_height_mul = 1;
 
    
-   // Typ anzeigen
+   // Typ anzeigen nur symbol
    
+   /*
    strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[6]))); // Arttext
    char_y= (posregister[3][0] & 0xFF00)>>8;
    char_x = posregister[3][0] & 0x00FF;
    char_width_mul = 1;
    display_write_str(menubuffer,2);
+   */
    
    
-   
-   // Art wert
+   // Art wert > updatescreen
+ /*
    uint8_t kanaltyp =(expowert & 0x0C)>>2;
    //strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[2]))); // Art wert
-   char_y= (posregister[3][2] & 0xFF00)>>8;
-   char_x = posregister[3][2] & 0x00FF;
+   char_y= (posregister[3][1] & 0xFF00)>>8;
+   char_x = posregister[3][1] & 0x00FF;
    char_width_mul = 1;
    display_write_int(kanaltyp,1);
 
    // Art Name
-   
+  
 
    strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTypTable[kanaltyp]))); // Art wert
    
@@ -517,7 +548,7 @@ void setcanalscreen(void)
    char_x = posregister[3][3] & 0x00FF;
    char_width_mul = 1;
     display_write_str(menubuffer,1);
-
+*/
    
    char_height_mul = 1;
 
@@ -528,6 +559,7 @@ void setcanalscreen(void)
 
 void setlevelscreen(void)
 {
+   resetRegister();
    blink_cursorpos=0xFFFF;
    posregister[0][0] =  itemtab[0] |    (1 << 8); // Leveltext
    posregister[0][1] =  itemtab[1] |    (1 << 8); // Kanalnummer
@@ -610,11 +642,10 @@ void setlevelscreen(void)
 
 void setmixscreen(void)
 {
+   resetRegister();
    blink_cursorpos=0xFFFF;
    posregister[0][0] =  itemtab[0] |    (1 << 8); // Mixtext
    posregister[0][1] =  itemtab[1] |    (1 << 8); // Mixnummer
-   //posregister[0][2] =  itemtab[4] |    (1 << 8); // Richtungtext
-   //posregister[0][3] =  itemtab[5] |    (1 << 8); // RichtungPfeil
    
    // level
    posregister[1][0] =  itemtab[0] |    (1 << 8); // Leveltext
@@ -647,7 +678,7 @@ void setmixscreen(void)
    cursorpos[4][0] =cursortab[0] |   (8 << 8); // cursorpos fuer
    
    
-   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTable[3]))); // Expo
+   strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(MixTable[0]))); // titel
    char_y= (posregister[0][0] & 0xFF00)>>8;
    char_x = posregister[0][0] & 0x00FF;
    char_height_mul = 2;
@@ -825,12 +856,6 @@ uint8_t update_screen(void)
          display_write_int(curr_kanal,2);
          
          
-         // Typ anzeigen
-         char_y= (posregister[0][5] & 0xFF00)>>8;
-         char_x = posregister[0][5] & 0x00FF;
-         char_height_mul = 1;
-         char_width_mul = 1;
-         display_write_propsymbol(pitch);
          
          
          
@@ -840,6 +865,16 @@ uint8_t update_screen(void)
          char_x = posregister[0][3] & 0x00FF;
          char_height_mul = 1;
          char_width_mul = 1;
+         
+         
+         // Funktion anzeigen
+         strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(FunktionTable[curr_funktionarray[curr_kanal]]))); // Funktion
+         char_y= (posregister[0][4] & 0xFF00)>>8;
+         char_x = posregister[0][4] & 0x00FF;
+         display_write_str(menubuffer,2);
+         
+        
+         
         
          // levelwert A anzeigen
          char_y= (posregister[1][2] & 0xFF00)>>8;
@@ -872,7 +907,8 @@ uint8_t update_screen(void)
          char_y= (posregister[0][3] & 0xFF00)>>8;
          char_x = posregister[0][3] & 0x00FF;
 
-         if (curr_kanal%2) // ungerade, waagrecht
+         //if (curr_kanal%2 ==0) // gerade, waagrecht
+         if (curr_funktionarray[curr_kanal]%2 ==0)
          {
             //if (curr_settingarray[curr_kanal][1] & 0x80)
             if (curr_expoarray[curr_kanal] & 0x80)
@@ -903,6 +939,24 @@ uint8_t update_screen(void)
             }
 
          }
+         
+         
+         // Typ anzeigen
+         char_y= (posregister[3][1] & 0xFF00)>>8;
+         char_x = posregister[3][1] & 0x00FF;
+         char_height_mul = 1;
+         char_width_mul = 1;
+         
+        // PGM_P typsymbol = (PGM_P)pgm_read_word(&(steuertyp[curr_funktionarray[curr_kanal]]));
+         
+         uint8_t kanaltyp =(curr_expoarray[curr_kanal] & 0x0C)>>2;
+         PGM_P typsymbol = steuertyp[kanaltyp];
+         //typsymbol=pitch;
+         
+         display_write_propsymbol(typsymbol);
+         //strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(KanalTypTable[kanaltyp]))); // Art wert
+         //display_write_propsymbol(pitch);
+
          char_height_mul = 1;
          char_width_mul = 1;
        

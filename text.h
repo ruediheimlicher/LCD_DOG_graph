@@ -48,7 +48,7 @@ PGM_P const SettingTable[] PROGMEM = {menutitel, model, setting, kanal,  mix};
 
 
 // Kanalscreen
-const char kanaltitel[] PROGMEM = "Kanal:";
+const char kanaltitel[] PROGMEM = "Kan:";
 const char richtung[] PROGMEM = "Ri:";
 const char level[] PROGMEM = "Level";
 const char expo[] PROGMEM = "Expo";
@@ -69,21 +69,22 @@ PGM_P const KanalTypTable[] PROGMEM = {pitchtyp,schiebertyp,schaltertyp};
 
 
 // Mix
+const char mixtitel[] PROGMEM = "Mix";
 const char vmix[] PROGMEM = "V-Mix";
 const char butterfly[] PROGMEM = "B-fly";
-const char mixtitel[] PROGMEM = "Mix:";
-PGM_P const MixTable[] PROGMEM = {vmix,butterfly,mixtitel};
+PGM_P const MixTable[] PROGMEM = {mixtitel,vmix,butterfly};
 
 
 // Funktion
-const char funktion0[] PROGMEM = "Hoehe\0";
-const char funktion1[] PROGMEM = "Seite\0";
-const char funktion2[] PROGMEM = "Quer\0";
-const char funktion3[] PROGMEM = "Motor\0";
-const char funktion4[] PROGMEM = "Quer_L\0";
-const char funktion5[] PROGMEM = "Quer_R\0";
-const char funktion6[] PROGMEM = "Lande\0";
-const char funktion7[] PROGMEM = "Aux\0";
+
+const char funktion0[] PROGMEM = "Seite  \0";
+const char funktion1[] PROGMEM = "Hoehe  \0";
+const char funktion2[] PROGMEM = "Quer   \0";
+const char funktion3[] PROGMEM = "Motor  \0";
+const char funktion4[] PROGMEM = "Quer L\0";
+const char funktion5[] PROGMEM = "Quer R\0";
+const char funktion6[] PROGMEM = "Lande  \0";
+const char funktion7[] PROGMEM = "Aux    \0";
 
 PGM_P const FunktionTable[] PROGMEM = {funktion0, funktion1, funktion2, funktion3, funktion4, funktion5, funktion6, funktion7};
 
