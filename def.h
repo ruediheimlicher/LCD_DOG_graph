@@ -52,7 +52,7 @@
 #define MANUELLPIN		3	// Pin 6 von PORT D fuer Anzeige Manuell
 
 #define MS_DIV		7	// Pin 7 von Status. Gesetzt wenn neue Schalterposition eingestellt
-#define MANUELLTIMEOUT	100 // Loopled-counts bis Manuell zurueckgesetzt wird. 02FF: ca. 100 s
+#define MANUELLTIMEOUT	200 // Loopled-counts bis Manuell zurueckgesetzt wird. 02FF: ca. 100 s
 
 #define SETTINGWAIT  6  // Pin in status wird gesetzt bis Taste 5 3* gedrueckt ist
 

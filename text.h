@@ -44,7 +44,9 @@ const char setting[] PROGMEM = "Set";
 const char kanal[] PROGMEM = "Kanal";
 
 const char mix[] PROGMEM = "Mix";
-PGM_P const SettingTable[] PROGMEM = {menutitel, model, setting, kanal,  mix};
+const char zuteilung[] PROGMEM = "Zuteilung";
+
+PGM_P const SettingTable[] PROGMEM = {menutitel, model, setting, kanal,  mix, zuteilung};
 
 
 // Kanalscreen
@@ -70,9 +72,20 @@ PGM_P const KanalTypTable[] PROGMEM = {pitchtyp,schiebertyp,schaltertyp};
 
 // Mix
 const char mixtitel[] PROGMEM = "Mix";
+PGM_P const MixTable[] PROGMEM = {mixtitel};
+
+// Mixtyp
+const char nada[] PROGMEM = " -    ";
 const char vmix[] PROGMEM = "V-Mix";
 const char butterfly[] PROGMEM = "B-fly";
-PGM_P const MixTable[] PROGMEM = {mixtitel,vmix,butterfly};
+const char A[] PROGMEM = "A    ";
+
+PGM_P const MixTypTable[] PROGMEM = {nada,vmix,butterfly,A};
+
+// Zuteilung
+const char zuteilungtitel[] PROGMEM = "Zuteilung";
+PGM_P const ZuteilungTable[] PROGMEM = {zuteilungtitel};
+
 
 
 // Funktion
@@ -88,6 +101,18 @@ const char funktion7[] PROGMEM = "Aux    \0";
 
 PGM_P const FunktionTable[] PROGMEM = {funktion0, funktion1, funktion2, funktion3, funktion4, funktion5, funktion6, funktion7};
 
+
+// Zuteilung an device auf dem Sender
+const char device0[] PROGMEM = "L-H\0"; // Pitch links horizontal
+const char device1[] PROGMEM = "L-V\0"; // Pitch links vertikal
+const char device2[] PROGMEM = "R-H\0";
+const char device3[] PROGMEM = "R-V\0";
+const char device4[] PROGMEM = "S-L\0"; // Schieber links
+const char device5[] PROGMEM = "S-R\0"; // Schieber rechts
+const char device6[] PROGMEM = "Sch\0"; // Schalter
+const char device7[] PROGMEM = "Aux\0";
+
+PGM_P const DispatchTable[] PROGMEM = {device0, device1, device2, device3, device4, device5, device6, device7};
 
 
 
