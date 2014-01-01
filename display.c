@@ -1057,8 +1057,8 @@ uint8_t update_screen(void)
          char_width_mul = 1;
          
          
-         // Funktion anzeigen
-         strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(FunktionTable[(curr_funktionarray[curr_kanal]&0x03)]))); // !! Funktion ist bit 0-2 !!
+         // Funktion anzeigen // Bit 4-7
+         strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(FunktionTable[((curr_funktionarray[curr_kanal]&0x30)>>4)]))); // !! Funktion ist bit 0-2 !!
          
          char_y= (posregister[0][4] & 0xFF00)>>8;
          char_x = posregister[0][4] & 0x00FF;
