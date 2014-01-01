@@ -105,7 +105,9 @@ volatile uint8_t                 default_mixarray[8]=
 };
 
 volatile uint8_t                 default_funktionarray[8]=
-{// bit 0-3: Kanal bit 4-7: Zuteilung an Pitch/Schieber/Schalter
+{
+   //
+   // bit 0-2: Steuerfunktion bit 4-6: Zuteilung an Steuerfunktion
    0x00,
    0x11,
    0x22,
@@ -2680,13 +2682,13 @@ int main (void)
                                           //lcd_gotoxy(5,1);
                                           //lcd_putc('*');
                                           //Bezeichnung von: FunktionTable[curr_funktionarray[curr_kanal]]
-                                          uint8_t tempfunktion = curr_funktionarray[curr_kanal];
+                                          uint8_t tempfunktion = curr_funktionarray[curr_kanal]&0x03; //bit 0-2
                                           //lcd_puthex(tempfunktion);
                                           //lcd_putc('*');
                                           tempfunktion++;
-                                          tempfunktion &= 0x07;
+                                          tempfunktion &= 0x03;
                                           //lcd_puthex(tempfunktion);
-                                          curr_funktionarray[curr_kanal] = tempfunktion; // cycle in FunktionTable
+                                          curr_funktionarray[curr_kanal] |= tempfunktion; // cycle in FunktionTable
                                           
                                        }break;
                                           

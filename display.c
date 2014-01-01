@@ -840,14 +840,14 @@ void setzuteilungscreen(void)
    char_x = posregister[0][0] & 0x00FF ;
    char_height_mul = 1;
    char_width_mul = 1;
-   display_write_str(menubuffer,1);
+  // display_write_str(menubuffer,1);
 
    strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(DispatchTable[3]))); // R_V
    char_y= (posregister[0][2] & 0xFF00)>>8;;
    char_x = posregister[0][2] & 0x00FF ;
    char_height_mul = 1;
    char_width_mul = 1;
-   display_write_str(menubuffer,1);
+   //display_write_str(menubuffer,1);
   
    strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(DispatchTable[2]))); // L_H
    char_y= (posregister[1][0] & 0xFF00)>>8;;
@@ -1057,8 +1057,8 @@ uint8_t update_screen(void)
          char_width_mul = 1;
          
          
-         // Funktion anzeigen // Bit 4-7
-         strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(FunktionTable[((curr_funktionarray[curr_kanal]&0x30)>>4)]))); // !! Funktion ist bit 0-2 !!
+         // Funktion anzeigen // Bit 4-6 !!
+         strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(FunktionTable[((curr_funktionarray[curr_kanal]&0x30)>>4)]))); // !! Kanal ist bit 0-2, Fuktion ist bit 4-6 !!
          
          char_y= (posregister[0][4] & 0xFF00)>>8;
          char_x = posregister[0][4] & 0x00FF;
@@ -1371,13 +1371,27 @@ uint8_t update_screen(void)
       case ZUTEILUNGSCREEN:
       {
 #pragma mark update ZUTEILUNGSCREEN
-        char_y= (posregister[0][1] & 0xFF00)>>8;
-         char_x = (posregister[0][1] & 0x00FF);
+         
+         // L_V
+         // Kanalnummer:
+        char_y= (posregister[0][0] & 0xFF00)>>8;
+         char_x = (posregister[0][0] & 0x00FF);
+         
          display_write_int(((curr_funktionarray[1]& 0x70)>>4),2);// Kanalnummer L_V,
 
-         char_y = (posregister[0][3] & 0xFF00)>>8;
-         char_x = (posregister[0][3] & 0x00FF);
+         char_y= (posregister[0][1] & 0xFF00)>>8;
+         char_x = (posregister[0][1] & 0x00FF);
+
+         
+         strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(FunktionTable[1]))); // L_V
+
+         char_y = (posregister[0][2] & 0xFF00)>>8;
+         char_x = (posregister[0][2] & 0x00FF);
          display_write_int((curr_funktionarray[3]& 0x07),2);// Kanalnummer R_V,
+         
+         
+         
+         
 
          char_y = (posregister[1][1] & 0xFF00)>>8;
          char_x = (posregister[1][1] & 0x00FF);
@@ -1460,7 +1474,7 @@ void display_akkuanzeige (uint16_t spannung)
    //full = 2;
    char_x = 110;
    
-   for (page=0;page<8;page++)
+   for (page=1;page<8;page++)
    {
       /*
       display_go_to(char_x+1,page);
@@ -2626,6 +2640,7 @@ void display_write_min_sek(uint16_t rawsekunde , uint8_t prop)
    uint8_t minute = rawsekunde/60%60;
    uint8_t sekunde = rawsekunde%60;
    uint8_t stunde = rawsekunde/3600;
+   
    char tempbuffer[6]={};
    if (stunde)
    {
@@ -2634,7 +2649,7 @@ void display_write_min_sek(uint16_t rawsekunde , uint8_t prop)
       stdbuffer[1] =stunde%10+'0';
       stdbuffer[2] =':';
       stdbuffer[3] = '\0';
-      display_write_str(stdbuffer,1);
+      display_write_str(stdbuffer,prop);
    }
    tempbuffer[0] =minute/10+'0';
    tempbuffer[1] =minute%10+'0';
