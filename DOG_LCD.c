@@ -685,13 +685,17 @@ int main (void)
                programmstatus &= ~(1<<MANUELL);
                manuellcounter=0;
 					MANUELL_PORT &= ~(1<<MANUELLPIN);
-               display_clear();
-               curr_screen=0;
-               curr_cursorspalte=0;
-               curr_cursorzeile=0;
-               last_cursorspalte=0;
-               last_cursorzeile=0;
-               sethomescreen();
+               
+               if (curr_screen) // nicht homescreen
+               {
+                  display_clear();
+                  curr_screen=0;
+                  curr_cursorspalte=0;
+                  curr_cursorzeile=0;
+                  last_cursorspalte=0;
+                  last_cursorzeile=0;
+                  sethomescreen();
+               }
 
 				}
 				//
