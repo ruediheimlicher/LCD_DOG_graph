@@ -1649,7 +1649,7 @@ uint8_t update_screen(void)
                //devicenummer ist im funktionarray bit 4-6. Wird in Zuteilung gesetzt
                uint8_t devicenummer = (curr_funktionarray[canalnummer]&0x70)>>4;
                
-               display_write_int(devicenummer,1);
+               //display_write_int(devicenummer,1);
  
                strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(DispatchTable[devicenummer])));
                display_write_str(menubuffer,1);
@@ -1657,11 +1657,12 @@ uint8_t update_screen(void)
                // Funktion
                char_x = spaltenarray[3];
                uint8_t funktionnummer =(curr_funktionarray[canalnummer]&0x07);
-               display_write_int(funktionnummer,1);
+               //display_write_int(funktionnummer,1);
                
                strcpy_P(menubuffer, (PGM_P)pgm_read_word(&(FunktionTable[funktionnummer])));
                display_write_str(menubuffer,1);
                
+               /*
                //if (char_y == 3)
                {
                display_write_str(" ",1);
@@ -1670,9 +1671,7 @@ uint8_t update_screen(void)
                display_write_int(curr_cursorzeile,1);
 
                }
-
-               //char_y++;
-            //   curr_impuls++;
+                */
             }
 
             

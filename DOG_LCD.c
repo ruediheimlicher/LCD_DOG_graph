@@ -1292,6 +1292,68 @@ int main (void)
                                     }
                                  }break;
                                     
+                                 case 1: // Zeile  nach oben verschieben
+                                 {
+                                    if (((curr_ausgangarray[curr_cursorzeile]& 0x07))<8)
+                                    {
+                                       uint8_t tempzeilenwert =curr_ausgangarray[curr_cursorzeile];
+                                       if (curr_impuls) // nicht erste Zeile, auf erster Seite
+                                       {
+                                          if ((curr_cursorzeile < 4) && (curr_impuls < 4)) // Noch vor scrollen, auf erster Seite
+                                          {
+                                             tempzeilenwert =curr_ausgangarray[curr_impuls];
+                                             
+                                             curr_ausgangarray[curr_impuls] =curr_ausgangarray[curr_impuls-1]; // Wert von naechster zeile
+                                             curr_ausgangarray[curr_impuls -1] = tempzeilenwert;
+                                             // cursorzeile verschieben
+                                             display_cursorweg();
+                                             
+                                             curr_cursorzeile--;
+                                             // blink-cursorzeile verschieben
+                                             blink_cursorpos = cursorpos[curr_cursorzeile][curr_cursorspalte];
+                                             
+                                          }
+                                          else  if ((curr_cursorzeile == 1) && (curr_impuls == 4))// zweite Zeile auf Seite 2, scrollen.
+                                          {
+                                             tempzeilenwert =curr_ausgangarray[curr_impuls];
+                                             
+                                             curr_ausgangarray[curr_impuls] =curr_ausgangarray[curr_impuls-1]; // Wert von naechster zeile, noch auf dieser Seite
+                                             curr_ausgangarray[curr_impuls -1] = tempzeilenwert;
+                                             display_cursorweg();
+                                             curr_cursorzeile = 3; // Scroll
+                                             // blink-cursorzeile verschieben
+                                             blink_cursorpos = cursorpos[3][curr_cursorspalte];
+                                          }
+                                          else  if ((curr_cursorzeile) && (curr_impuls >4))// zweite Zeile oder mehr auf zweiter Seite
+                                          {
+                                             tempzeilenwert =curr_ausgangarray[curr_impuls];
+                                             curr_ausgangarray[curr_impuls] =curr_ausgangarray[curr_impuls-1]; // Wert von naechster zeile
+                                             curr_ausgangarray[curr_impuls -1] = tempzeilenwert;
+                                             // cursorzeile verschieben
+                                             display_cursorweg();
+                                             
+                                             curr_cursorzeile--;
+                                             // blink-cursorzeile verschieben
+                                             blink_cursorpos = cursorpos[curr_cursorzeile][curr_cursorspalte];
+                                             
+                                          }
+                                          curr_impuls--;
+                                       }
+                                       else // letzte Zeile, mit erster zeile vertauschen
+                                       {
+                                          /*
+                                           tempzeilenwert =curr_ausgangarray[curr_impuls];
+                                           curr_ausgangarray[curr_impuls] =curr_ausgangarray[0]; // Wert von erster zeile
+                                           curr_ausgangarray[0] = tempzeilenwert;
+                                           display_cursorweg();
+                                           curr_cursorzeile=0;
+                                           curr_impuls =0;
+                                           blink_cursorpos = cursorpos[0][curr_cursorspalte];
+                                           */
+                                       }
+                                    }
+                                    
+                                 }break;
                                     
                                     
                               }// switch curr_cursorspalte
@@ -3202,30 +3264,63 @@ int main (void)
                                     }
                                  }break;
                                     
-                                 case 1: // Zeile verschieben
+                                 case 1: // Zeile nach unten verschieben
                                  {
                                     if (((curr_ausgangarray[curr_cursorzeile]& 0x07))<8)
                                     {
                                        uint8_t tempzeilenwert =curr_ausgangarray[curr_cursorzeile];
-                                       if (curr_cursorzeile < 7) // nicht letzte Zeile
+                                       if (curr_impuls < 7) // nicht letzte Zeile
                                        {
-                                          curr_ausgangarray[curr_cursorzeile] =curr_ausgangarray[curr_cursorzeile+1]; // Wert von naechster zeile
-                                          curr_ausgangarray[curr_cursorzeile +1] = tempzeilenwert;
-                                          // cursorzeile verschieben
-                                          display_cursorweg();
-                                          curr_cursorzeile++;
-                                          // blink-cursorzeile verschieben
-                                          blink_cursorpos = cursorpos[curr_cursorzeile][curr_cursorspalte];
-                                         
+                                          if ((curr_cursorzeile < 3) && (curr_impuls < 3)) // Noch vor scrollen, auf erster Seite
+                                          {
+                                              tempzeilenwert =curr_ausgangarray[curr_impuls];
+                                             
+                                             curr_ausgangarray[curr_impuls] =curr_ausgangarray[curr_impuls+1]; // Wert von naechster zeile
+                                             curr_ausgangarray[curr_impuls +1] = tempzeilenwert;
+                                             // cursorzeile verschieben
+                                             display_cursorweg();
+                                             
+                                             curr_cursorzeile++;
+                                             // blink-cursorzeile verschieben
+                                             blink_cursorpos = cursorpos[curr_cursorzeile][curr_cursorspalte];
+                                             
+                                          }
+                                          else  if ((curr_cursorzeile == 3) && (curr_impuls == 3))// zweitunterste Zeile, scrollen.
+                                          {
+                                             tempzeilenwert =curr_ausgangarray[curr_impuls];
+                                             curr_ausgangarray[curr_impuls] =curr_ausgangarray[curr_impuls+1]; // Wert von naechster zeile, noch auf dieser Seite
+                                             curr_ausgangarray[curr_impuls +1] = tempzeilenwert;
+                                             display_cursorweg();
+                                             curr_cursorzeile = 1; // Scroll
+                                             // blink-cursorzeile verschieben
+                                             blink_cursorpos = cursorpos[1][curr_cursorspalte];
+                                          }
+                                          else  if ((curr_cursorzeile < 4) && (curr_impuls >3))// zweite Zeile oder mehr auf zweiter Seite
+                                          {
+                                             tempzeilenwert =curr_ausgangarray[curr_impuls];
+                                             curr_ausgangarray[curr_impuls] =curr_ausgangarray[curr_impuls+1]; // Wert von naechster zeile
+                                             curr_ausgangarray[curr_impuls +1] = tempzeilenwert;
+                                             // cursorzeile verschieben
+                                             display_cursorweg();
+                                             
+                                             curr_cursorzeile++;
+                                             // blink-cursorzeile verschieben
+                                             blink_cursorpos = cursorpos[curr_cursorzeile][curr_cursorspalte];
+                                             
+                                          }
                                           curr_impuls++;
                                        }
                                        else // letzte Zeile, mit erster zeile vertauschen
                                        {
-                                          curr_ausgangarray[curr_cursorzeile] =curr_ausgangarray[0]; // Wert von erster zeile
+                                          /*
+                                          tempzeilenwert =curr_ausgangarray[curr_impuls];
+                                          curr_ausgangarray[curr_impuls] =curr_ausgangarray[0]; // Wert von erster zeile
                                           curr_ausgangarray[0] = tempzeilenwert;
                                           display_cursorweg();
                                           curr_cursorzeile=0;
+                                          curr_impuls =0;
                                           blink_cursorpos = cursorpos[0][curr_cursorspalte];
+                                           */
                                        }
                                      }
 
