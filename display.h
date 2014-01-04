@@ -182,6 +182,7 @@ uint8_t update_screen(void);
 uint8_t display_diagramm (uint8_t char_x, uint8_t char_y, uint8_t stufea,uint8_t stufeb, uint8_t typ);
 uint8_t display_kanaldiagramm (uint8_t char_x, uint8_t char_y, uint8_t level, uint8_t expo, uint8_t typ );
 
+void display_cursorweg(void);
 
 
 	#define display_write(format, args...)   display_write_P(PSTR(format) , ## args)

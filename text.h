@@ -45,8 +45,10 @@ const char kanal[] PROGMEM = "Kanal";
 
 const char mix[] PROGMEM = "Mix";
 const char zuteilung[] PROGMEM = "Zuteilung";
+const char ausgang[] PROGMEM = "Ausgang";
 
-PGM_P const SettingTable[] PROGMEM = {menutitel, model, setting, kanal,  mix, zuteilung};
+
+PGM_P const SettingTable[] PROGMEM = {menutitel, model, setting, kanal,  mix, zuteilung,ausgang};
 
 
 // Kanalscreen
@@ -90,16 +92,29 @@ PGM_P const ZuteilungTable[] PROGMEM = {zuteilungtitel};
 
 // Funktion
 
-const char funktion0[] PROGMEM = "Seite  \0";
-const char funktion1[] PROGMEM = "Hoehe  \0";
+const char funktion0[] PROGMEM = "Seite \0";
+const char funktion1[] PROGMEM = "Hoehe \0";
 const char funktion2[] PROGMEM = "Quer   \0";
-const char funktion3[] PROGMEM = "Motor  \0";
+const char funktion3[] PROGMEM = "Motor \0";
 const char funktion4[] PROGMEM = "Quer L\0";
 const char funktion5[] PROGMEM = "Quer R\0";
-const char funktion6[] PROGMEM = "Lande  \0";
+const char funktion6[] PROGMEM = "Lande \0";
 const char funktion7[] PROGMEM = "Aux    \0";
 
 PGM_P const FunktionTable[] PROGMEM = {funktion0, funktion1, funktion2, funktion3, funktion4, funktion5, funktion6, funktion7};
+
+// Ausgang
+
+const char ausgang0[] PROGMEM = "Imp";
+const char ausgang1[] PROGMEM = "Kan";
+const char ausgang2[] PROGMEM = "Dev";
+const char ausgang3[] PROGMEM = "Funktion";
+const char ausgang4[] PROGMEM = " ";
+const char ausgang5[] PROGMEM = "Quer R\0";
+const char ausgang6[] PROGMEM = "Lande \0";
+const char ausgang7[] PROGMEM = "Aux    \0";
+
+PGM_P const AusgangTable[] PROGMEM = {ausgang0, ausgang1, ausgang2, ausgang3, ausgang4, ausgang5, ausgang6, ausgang7};
 
 
 // Zuteilung an device auf dem Sender

@@ -56,6 +56,7 @@
 
 #define SETTINGWAIT  6  // Pin in status wird gesetzt bis Taste 5 3* gedrueckt ist
 
+#define UPDATESCREEN  5 // Pin in status wird gesetzt wenn eine Taste gedrueckt ist, reset wenn update ausgefuerht
 
 #define MINWAIT         3 // Anzahl loops von loopcount1 bis einschalten
 
