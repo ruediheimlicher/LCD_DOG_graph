@@ -273,7 +273,8 @@ void timer0(void)
 {
    TIMSK0 |= (1 << TOIE0);    //Set the ISR COMPA vect
    
-   TCCR0B |= (1 << CS02);//|(1 << CS00);
+   TCCR0B |= (1 << CS02);//
+  // TCCR0B |= (1 << CS00);
 
 }
 
