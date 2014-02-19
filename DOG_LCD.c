@@ -2284,7 +2284,6 @@ int main (void)
                                     
                                  }break;
                                     
-                                    
                                  case  1:
                                  {
                                     //blink_cursorpos =  cursorpos[1][1]; // settingcursor
