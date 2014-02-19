@@ -2304,7 +2304,6 @@ int main (void)
                               manuellcounter=0;
                            }
                            
-                           
                         }break;
  
                         case MIXSCREEN: // Mixing
