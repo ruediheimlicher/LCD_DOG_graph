@@ -2280,7 +2280,6 @@ int main (void)
                                        }   break;
                                     }
                                    // blink_cursorpos =  cursorpos[0][1]; // richtungcursor
-                                    
                                  }break;
                                     
                                  case  1:
