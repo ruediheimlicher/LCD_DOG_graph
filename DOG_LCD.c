@@ -3360,7 +3360,7 @@ int main (void)
                      
                   case 10:// *Manuell einschalten
                   {
-                     #pragma mark Taste 10
+                     #pragma mark 
                     }break;
                      
                   case 11://
