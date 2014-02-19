@@ -2281,7 +2281,6 @@ int main (void)
                                     }
                                    // blink_cursorpos =  cursorpos[0][1]; // richtungcursor
                                     
-                                    
                                  }break;
                                     
                                  case  1:
